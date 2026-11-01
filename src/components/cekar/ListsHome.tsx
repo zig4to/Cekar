@@ -90,21 +90,25 @@ export default function ListsHome({
                   className="flex min-w-0 flex-1 items-center gap-3 p-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{l.name}</p>
-                    <p className="truncate text-sm text-gray-500 dark:text-gray-400">
-                      {l.storeNames.length ? l.storeNames.join(" · ") : "Brez trgovin"}
-                    </p>
+                    {/* naslov ima celo vrstico zase (po potrebi se prelomi),
+                        števec je v vrstici s trgovinami pod njim */}
+                    <p className="break-words font-medium">{l.name}</p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <p className="min-w-0 flex-1 truncate text-sm text-gray-500 dark:text-gray-400">
+                        {l.storeNames.length ? l.storeNames.join(" · ") : "Brez trgovin"}
+                      </p>
+                      <span
+                        className={
+                          allDone
+                            ? "flex-shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                        }
+                      >
+                        {l.checked}/{l.total}
+                      </span>
+                    </div>
                   </div>
-                  <span
-                    className={
-                      allDone
-                        ? "rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    }
-                  >
-                    {l.checked}/{l.total}
-                  </span>
-                  <IconChevronRight className="h-4 w-4 text-gray-400" />
+                  <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
                 </Link>
                 <button
                   type="button"
