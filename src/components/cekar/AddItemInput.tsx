@@ -6,7 +6,7 @@ import { norm, parseQuantity } from "@/lib/cekar/text";
 import QuantityStepper from "@/components/cekar/QuantityStepper";
 import type { CekarProduct } from "@/lib/types/database.types";
 
-const MAX_SUGGESTIONS = 12;
+const MAX_SUGGESTIONS = 8;
 
 // Vnos izdelka za eno trgovino. Šele med pisanjem se pod poljem
 // pokažejo predlogi iz kataloga SAMO te trgovine — izdelki, ki so bili tu
@@ -92,20 +92,22 @@ export default function AddItemInput({
       </form>
 
       {showSuggestions && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        // seznam ujemanj pod poljem — klik na vrstico doda izdelek
+        <ul className="mt-2 divide-y divide-gray-100 overflow-hidden rounded-md border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
           {suggestions.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => add(p.name)}
-              className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-sm text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
-            >
-              <IconPlus className="h-3 w-3" />
-              {p.name}
-            </button>
+            <li key={p.id}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => add(p.name)}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              >
+                <IconPlus className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span className="min-w-0 flex-1 truncate">{p.name}</span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
