@@ -61,6 +61,10 @@ enem koraku upserta katalog (`use_count + 1`) in vstavi vrstico na seznam —
 ne vstavljaj v `cekar_items` mimo njega, sicer katalog ne raste.
 Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 
+`0004_store_default_items.sql`: `cekar_stores.default_items text[]` — ko
+trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
+(Mlekarica → Domače mleko). Urejanje zaenkrat samo v bazi.
+
 `0003_item_quantity.sql`: `cekar_items.quantity` (1–999, privzeto 1), RPC
 `cekar_add_item(..., p_quantity default 1)`. Količino nastaviš s
 `QuantityStepper` ob vnosu ali jo vpišeš v ime ("2 mleko", "mleko x2" —

@@ -142,9 +142,13 @@ export async function deleteListAction(listId: string): Promise<CekarResult> {
   redirect("/");
 }
 
+// Doda trgovino na seznam in nanj privzete izdelke trgovine (default_items,
+// npr. Mlekarica → Domače mleko). skipItem: izdelek, ki ga addItemAction
+// doda takoj zatem — da ne pride dvakrat.
 export async function addStoreToListAction(
   listId: string,
-  storeId: string
+  storeId: string,
+  skipItem?: string
 ): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
@@ -161,6 +165,21 @@ export async function addStoreToListAction(
     position: (last?.position ?? 0) + 1,
   });
   if (error) return fail(undefined, "Trgovine ni bilo mogoče dodati.");
+
+  const { data: store } = await c.supabase
+    .from("cekar_stores")
+    .select("default_items")
+    .eq("id", storeId)
+    .maybeSingle();
+  const skip = skipItem?.trim().toLowerCase();
+  for (const name of store?.default_items ?? []) {
+    if (name.trim().toLowerCase() === skip) continue;
+    await c.supabase.rpc("cekar_add_item", {
+      p_list_id: listId,
+      p_store_id: storeId,
+      p_name: name,
+    });
+  }
   return done();
 }
 
@@ -204,7 +223,7 @@ export async function addItemAction(
     .eq("store_id", storeId)
     .maybeSingle();
   if (!link) {
-    const res = await addStoreToListAction(listId, storeId);
+    const res = await addStoreToListAction(listId, storeId, name);
     if (res.error) return res;
   }
   const { error } = await c.supabase.rpc("cekar_add_item", {

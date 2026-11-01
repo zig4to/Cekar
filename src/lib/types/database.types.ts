@@ -28,6 +28,7 @@ export type CekarStore = {
   household_id: string;
   name: string;
   position: number;
+  default_items: string[]; // dodajo se sami, ko trgovino dodaš na seznam
   created_at: string;
 };
 
