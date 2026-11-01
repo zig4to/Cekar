@@ -21,10 +21,15 @@
   --font-sans: var(--font-rubik);
 }
 
-/* Brez utripajočega kazalca (kurzorja) nikjer v aplikaciji — tudi v vnosnih
-   poljih; vneseno besedilo je še vedno vidno. */
+/* Utripajoč kazalec (kurzor) samo v vnosnih poljih, ne na navadnem besedilu
+   strani (npr. ob Chromovem "caret browsing" ali kliku v besedilo). */
 * {
   caret-color: transparent;
+}
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
 }
 
 body {
