@@ -16,7 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { rememberList } from "@/lib/cekar/preview";
 import { makeCategoryOf } from "@/lib/cekar/categories";
-import { itemsLabel } from "@/lib/cekar/text";
+import { formatEur, itemsLabel } from "@/lib/cekar/text";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
@@ -88,6 +88,7 @@ export default function ListView({
   const [quickAdd, setQuickAdd] = useState(false);
   const [writing, setWriting] = useState(false);
   const isTemplate = list.is_template;
+  const spentTotal = Object.values(detail.spent).reduce((a, b) => a + b, 0);
   const tempSeq = useRef(0);
 
   // Živo osveževanje: ob katerikoli spremembi izdelkov/trgovin na seznamih
@@ -231,6 +232,7 @@ export default function ListView({
               : total === 0
                 ? "Prazen seznam"
                 : `${checked} od ${total} v košarici`}
+            {!isTemplate && spentTotal > 0 && ` · zapravljeno ${formatEur(spentTotal)}`}
           </p>
         </div>
         <Menu label="Možnosti seznama">
@@ -343,6 +345,7 @@ export default function ListView({
             receipts: detail.receipts.filter((r) => r.store_id === store.id),
             onError: setError,
           }}
+          spent={detail.spent[store.id] ?? null}
           template={isTemplate}
         />
         );

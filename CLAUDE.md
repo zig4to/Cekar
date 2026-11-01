@@ -73,6 +73,11 @@ naravnost iz brskalnika — mimo omejitve velikosti server action) →
 `addReceiptAction`; ikona računa odpre `ReceiptsDialog` (začasne povezave,
 brisanje). Ob brisanju seznama ostanejo datoteke v bucketu (vrstice gredo s cascade).
 
+`0010_store_spent.sql`: `cekar_list_stores.spent numeric(10,2)` — znesek, zapravljen v
+trgovini na seznamu. `SpentButton` v glavi trgovine (levo od kamere): ikona € ali
+znesek, dialog (`parseAmount` sprejme „23,45“, prazno pobriše) →
+`setStoreSpentAction`. Vsota je v podnaslovu `ListView`.
+
 `0008_single_item_stores.sql`: `cekar_stores.single_item` — trgovina z enim
 izdelkom (Mlekarica → Domače mleko, Domača Jajca → Domača jajca) je na seznamu
 ena vrstica (`SingleItemStore`: logo, ime izdelka, kljukica, − / +) namesto

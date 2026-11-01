@@ -174,6 +174,11 @@ export async function getListDetail(
     products,
     categories,
     receipts: receipts ?? [],
+    spent: Object.fromEntries(
+      (listStores ?? [])
+        .filter((ls) => ls.spent !== null)
+        .map((ls) => [ls.store_id, Number(ls.spent)])
+    ),
   };
 }
 

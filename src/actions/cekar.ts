@@ -581,3 +581,25 @@ export async function deleteReceiptAction(receiptId: string): Promise<CekarResul
   if (receipt) await c.supabase.storage.from(RECEIPT_BUCKET).remove([receipt.path]);
   return done();
 }
+
+// ===== Zapravljeno =====
+
+// Znesek za trgovino na seznamu; null pobriše vnos.
+export async function setStoreSpentAction(
+  listId: string,
+  storeId: string,
+  amount: number | null
+): Promise<CekarResult> {
+  if (amount !== null && !(amount >= 0 && amount < 100_000_000)) {
+    return { error: "Neveljaven znesek." };
+  }
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_list_stores")
+    .update({ spent: amount === null ? null : Math.round(amount * 100) / 100 })
+    .eq("list_id", listId)
+    .eq("store_id", storeId);
+  if (error) return fail(undefined, "Shranjevanje ni uspelo.");
+  return done();
+}

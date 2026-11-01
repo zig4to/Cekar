@@ -68,6 +68,7 @@ export type CekarListStore = {
   list_id: string;
   store_id: string;
   position: number;
+  spent: number | null; // zapravljeno v tej trgovini (EUR)
   created_at: string;
 };
 
@@ -168,4 +169,5 @@ export type CekarListDetail = {
   products: CekarProduct[]; // katalog za predloge (vse trgovine)
   categories: CekarCategory[]; // v vrstnem redu (= vrstni red skupin)
   receipts: CekarReceipt[]; // slike računov tega seznama (najnovejši zadnji)
+  spent: Record<string, number>; // store_id → zapravljeno (samo vnesene)
 };

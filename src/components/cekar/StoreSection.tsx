@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/icons";
 import AddItemInput from "@/components/cekar/AddItemInput";
 import ReceiptButtons from "@/components/cekar/ReceiptButtons";
+import SpentButton from "@/components/cekar/SpentButton";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
@@ -50,6 +51,7 @@ export default function StoreSection({
   categoryOf,
   template = false,
   receiptProps,
+  spent = null,
 }: {
   listId: string;
   store: CekarStore;
@@ -66,6 +68,7 @@ export default function StoreSection({
   categoryOf: (item: CekarItem) => string | null;
   template?: boolean; // stalni seznam: brez odkljukanja
   receiptProps?: Omit<ComponentProps<typeof ReceiptButtons>, "store">;
+  spent?: number | null; // zapravljeno v tej trgovini
 }) {
   const open = items
     .filter((i) => !i.checked)
@@ -135,7 +138,10 @@ export default function StoreSection({
           <StoreLogo name={store.name} />
           <h2 className="min-w-0 flex-1 truncate font-semibold">{store.name}</h2>
         </button>
-        {/* račune slikaš ob nakupu — stalni seznam jih nima */}
+        {/* znesek in račun ob nakupu — stalni seznam ju nima */}
+        {!template && (
+          <SpentButton listId={listId} storeId={store.id} storeName={store.name} spent={spent} />
+        )}
         {!template && receiptProps && (
           <ReceiptButtons store={store} {...receiptProps} />
         )}

@@ -29,3 +29,14 @@ export function itemsLabel(n: number) {
   const word = r === 1 ? "izdelek" : r === 2 ? "izdelka" : r === 3 || r === 4 ? "izdelki" : "izdelkov";
   return `${n} ${word}`;
 }
+
+// "23,45", "23.45 €", "1.234,50" → število; prazno → null; nesmisel → NaN.
+export function parseAmount(text: string) {
+  let s = text.replace(/[€\s]/g, "");
+  if (s === "") return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  return /^\d+(\.\d{0,2})?$/.test(s) ? Number(s) : NaN;
+}
+
+const EUR = new Intl.NumberFormat("sl-SI", { style: "currency", currency: "EUR" });
+export const formatEur = (n: number) => EUR.format(n);
