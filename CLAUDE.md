@@ -65,6 +65,14 @@ Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
 (Mlekarica → Domače mleko). Urejanje zaenkrat samo v bazi.
 
+`0009_receipts.sql`: `cekar_receipts` + zasebni bucket **`cekar-racuni`** (pot
+`<household_id>/<list_id>/<uuid>.jpg`, storage politike samo za mapo lastnega
+gospodinjstva). V glavi trgovine `ReceiptButtons`: kamera (`capture="environment"`)
+→ `uploadReceipt` (`src/lib/cekar/receipts.ts`, pomanjša na 1800 px JPEG, nalaga
+naravnost iz brskalnika — mimo omejitve velikosti server action) →
+`addReceiptAction`; ikona računa odpre `ReceiptsDialog` (začasne povezave,
+brisanje). Ob brisanju seznama ostanejo datoteke v bucketu (vrstice gredo s cascade).
+
 `0008_single_item_stores.sql`: `cekar_stores.single_item` — trgovina z enim
 izdelkom (Mlekarica → Domače mleko, Domača Jajca → Domača jajca) je na seznamu
 ena vrstica (`SingleItemStore`: logo, ime izdelka, kljukica, − / +) namesto

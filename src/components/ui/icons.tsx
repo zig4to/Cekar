@@ -25,6 +25,21 @@ export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconCamera = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+    <circle cx="12" cy="13" r="3" />
+  </Base>
+);
+
+export const IconReceipt = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+    <path d="M12 17.5v-11" />
+  </Base>
+);
+
 export const IconRepeat = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <path d="m17 2 4 4-4 4" />

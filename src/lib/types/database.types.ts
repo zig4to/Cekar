@@ -85,6 +85,16 @@ export type CekarItem = {
   created_at: string;
 };
 
+export type CekarReceipt = {
+  id: string;
+  household_id: string;
+  list_id: string;
+  store_id: string;
+  path: string; // v bucketu cekar-racuni: <household_id>/<list_id>/<uuid>.jpg
+  created_by: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -93,6 +103,7 @@ export type Database = {
       cekar_stores: Table<CekarStore, "household_id" | "name">;
       cekar_products: Table<CekarProduct, "household_id" | "store_id" | "name">;
       cekar_categories: Table<CekarCategory, "household_id" | "name">;
+      cekar_receipts: Table<CekarReceipt, "household_id" | "list_id" | "store_id" | "path">;
       cekar_lists: Table<CekarList, "household_id" | "name">;
       cekar_list_stores: Table<CekarListStore, "list_id" | "store_id">;
       cekar_items: Table<CekarItem, "list_id" | "store_id" | "name">;
@@ -156,4 +167,5 @@ export type CekarListDetail = {
   allStores: CekarStore[]; // vse trgovine gospodinjstva (za "Dodaj trgovino")
   products: CekarProduct[]; // katalog za predloge (vse trgovine)
   categories: CekarCategory[]; // v vrstnem redu (= vrstni red skupin)
+  receipts: CekarReceipt[]; // slike računov tega seznama (najnovejši zadnji)
 };

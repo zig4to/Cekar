@@ -337,6 +337,12 @@ export default function ListView({
           initialCollapsed={collapsedStoreIds.includes(store.id)}
           categories={categories}
           categoryOf={categoryOf}
+          receiptProps={{
+            householdId: list.household_id,
+            listId: list.id,
+            receipts: detail.receipts.filter((r) => r.store_id === store.id),
+            onError: setError,
+          }}
           template={isTemplate}
         />
         );

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { guessCategory } from "@/lib/cekar/categories";
+import { RECEIPT_BUCKET } from "@/lib/cekar/receipt-bucket";
 
 export type CekarResult = { error?: string };
 
@@ -540,5 +541,43 @@ export async function reorderCategoriesAction(
     )
   );
   if (results.some((r) => r.error)) return fail(undefined, "Shranjevanje ni uspelo.");
+  return done();
+}
+
+// ===== Računi (slike) =====
+
+// Slika je že naložena (iz brskalnika, src/lib/cekar/receipts.ts) — tu jo
+// samo povežemo s seznamom in trgovino.
+export async function addReceiptAction(
+  listId: string,
+  storeId: string,
+  path: string
+): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase.from("cekar_receipts").insert({
+    household_id: c.householdId,
+    list_id: listId,
+    store_id: storeId,
+    path,
+  });
+  if (error) {
+    await c.supabase.storage.from(RECEIPT_BUCKET).remove([path]);
+    return fail(undefined, "Računa ni bilo mogoče shraniti.");
+  }
+  return done();
+}
+
+export async function deleteReceiptAction(receiptId: string): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { data: receipt, error } = await c.supabase
+    .from("cekar_receipts")
+    .delete()
+    .eq("id", receiptId)
+    .select("path")
+    .maybeSingle();
+  if (error) return fail(undefined, "Brisanje ni uspelo.");
+  if (receipt) await c.supabase.storage.from(RECEIPT_BUCKET).remove([receipt.path]);
   return done();
 }

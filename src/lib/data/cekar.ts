@@ -127,7 +127,15 @@ export async function getListDetail(
   supabase: Supa,
   listId: string
 ): Promise<CekarListDetail | null> {
-  const [{ data: list }, { data: listStores }, { data: items }, allStores, products, categories] =
+  const [
+    { data: list },
+    { data: listStores },
+    { data: items },
+    allStores,
+    products,
+    categories,
+    { data: receipts },
+  ] =
     await Promise.all([
       supabase.from("cekar_lists").select("*").eq("id", listId).maybeSingle(),
       supabase
@@ -145,6 +153,11 @@ export async function getListDetail(
       getStores(supabase),
       getProducts(supabase),
       getCategories(supabase),
+      supabase
+        .from("cekar_receipts")
+        .select("*")
+        .eq("list_id", listId)
+        .order("created_at"),
     ]);
   if (!list) return null;
 
@@ -160,6 +173,7 @@ export async function getListDetail(
     allStores,
     products,
     categories,
+    receipts: receipts ?? [],
   };
 }
 

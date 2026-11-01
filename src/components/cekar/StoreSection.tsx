@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import {
   IconCheck,
@@ -12,6 +12,7 @@ import {
   IconX,
 } from "@/components/ui/icons";
 import AddItemInput from "@/components/cekar/AddItemInput";
+import ReceiptButtons from "@/components/cekar/ReceiptButtons";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
@@ -48,6 +49,7 @@ export default function StoreSection({
   categories,
   categoryOf,
   template = false,
+  receiptProps,
 }: {
   listId: string;
   store: CekarStore;
@@ -63,6 +65,7 @@ export default function StoreSection({
   categories: CekarCategory[];
   categoryOf: (item: CekarItem) => string | null;
   template?: boolean; // stalni seznam: brez odkljukanja
+  receiptProps?: Omit<ComponentProps<typeof ReceiptButtons>, "store">;
 }) {
   const open = items
     .filter((i) => !i.checked)
@@ -131,10 +134,14 @@ export default function StoreSection({
           />
           <StoreLogo name={store.name} />
           <h2 className="min-w-0 flex-1 truncate font-semibold">{store.name}</h2>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {template ? items.length : `${checked.length}/${items.length}`}
-          </span>
         </button>
+        {/* račune slikaš ob nakupu — stalni seznam jih nima */}
+        {!template && receiptProps && (
+          <ReceiptButtons store={store} {...receiptProps} />
+        )}
+        <span className="px-1 text-xs text-gray-500 dark:text-gray-400">
+          {template ? items.length : `${checked.length}/${items.length}`}
+        </span>
         <Menu label={`Možnosti za ${store.name}`}>
           {(close) => (
             <MenuItem
