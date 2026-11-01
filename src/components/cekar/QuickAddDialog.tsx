@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { IconPlus, IconStore } from "@/components/ui/icons";
-import { norm } from "@/lib/cekar/text";
+import { norm, parseQuantity } from "@/lib/cekar/text";
+import QuantityStepper from "@/components/cekar/QuantityStepper";
 import type { CekarItemBrief, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 8;
@@ -30,9 +31,10 @@ export default function QuickAddDialog({
   allStores: CekarStore[];
   products: CekarProduct[]; // že razvrščeni po use_count / last_used_at
   items: CekarItemBrief[];
-  onAdd: (storeId: string, name: string) => void;
+  onAdd: (storeId: string, name: string, quantity: number) => void;
 }) {
   const [value, setValue] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [lastAdded, setLastAdded] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +43,7 @@ export default function QuickAddDialog({
     // Ponastavi polje ob vsakem odprtju dialoga.
     /* eslint-disable react-hooks/set-state-in-effect */
     setValue("");
+    setQuantity(1);
     setLastAdded(null);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open]);
@@ -51,7 +54,9 @@ export default function QuickAddDialog({
     items.filter((i) => !i.checked).map((i) => `${i.store_id}:${norm(i.name)}`)
   );
 
-  const q = norm(value);
+  // "2 mleko" / "mleko x2" = količina 2; predlogi iščejo samo po imenu
+  const parsed = parseQuantity(value, quantity);
+  const q = norm(parsed.name);
   const suggestions = products
     .filter(
       (p) =>
@@ -73,9 +78,11 @@ export default function QuickAddDialog({
   const add = (storeId: string, name: string) => {
     const clean = name.trim();
     if (!clean) return;
-    onAdd(storeId, clean);
-    setLastAdded(`${clean} → ${storeName.get(storeId) ?? ""}`);
+    onAdd(storeId, clean, parsed.quantity);
+    const qty = parsed.quantity > 1 ? `${parsed.quantity}× ` : "";
+    setLastAdded(`${qty}${clean} → ${storeName.get(storeId) ?? ""}`);
     setValue("");
+    setQuantity(1);
     inputRef.current?.focus();
   };
 
@@ -88,6 +95,7 @@ export default function QuickAddDialog({
             // Enter doda prvi predlog (najboljše ujemanje), če obstaja.
             if (q && suggestions[0]) add(suggestions[0].store_id, suggestions[0].name);
           }}
+          className="flex items-center gap-2"
         >
           <input
             ref={inputRef}
@@ -96,7 +104,16 @@ export default function QuickAddDialog({
             onChange={(e) => setValue(e.target.value)}
             placeholder="Kaj potrebuješ? npr. Malinovec"
             enterKeyHint="done"
-            className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-800 dark:placeholder:text-gray-500"
+            className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2.5 text-base focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-800 dark:placeholder:text-gray-500"
+          />
+          <QuantityStepper
+            value={parsed.quantity}
+            size="lg"
+            onChange={(n) => {
+              // količina, vpisana v ime, se ob kliku prenese v števec
+              if (parsed.name !== value.trim()) setValue(parsed.name);
+              setQuantity(n);
+            }}
           />
         </form>
 
@@ -134,7 +151,7 @@ export default function QuickAddDialog({
         {q && (
           <div>
             <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Dodaj „{value.trim()}“ v
+              Dodaj „{parsed.quantity > 1 ? `${parsed.quantity}× ` : ""}{parsed.name}“ v
             </p>
             <div className="flex flex-wrap gap-1.5">
               {storeChoices.map((s) => (
@@ -142,7 +159,7 @@ export default function QuickAddDialog({
                   key={s.id}
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => add(s.id, value)}
+                  onClick={() => add(s.id, parsed.name)}
                   className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-sm text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                 >
                   <IconStore className="h-3 w-3" />

@@ -80,7 +80,7 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
       // vrstni red kot v ListView — loading.tsx iz tega riše takojšnji pogled
       supabase
         .from("cekar_items")
-        .select("list_id, store_id, name, checked")
+        .select("list_id, store_id, name, checked, quantity")
         .order("position")
         .order("created_at"),
       getStores(supabase),
@@ -98,7 +98,12 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
       name: l.name,
       storeNames: storeIds.map((id) => storeName.get(id) ?? ""),
       storeIds,
-      items: own.map(({ store_id, name, checked }) => ({ store_id, name, checked })),
+      items: own.map(({ store_id, name, checked, quantity }) => ({
+        store_id,
+        name,
+        checked,
+        quantity,
+      })),
       total: own.length,
       checked: own.filter((i) => i.checked).length,
     };

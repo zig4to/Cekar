@@ -37,12 +37,12 @@ export default function ListsHome({
     rememberLists(lists, stores, householdName);
   }, [lists, stores, householdName]);
 
-  const quickAdd = (storeId: string, name: string) => {
+  const quickAdd = (storeId: string, name: string, quantity: number) => {
     const list = quickList;
     if (!list) return;
     setError(null);
     startTransition(async () => {
-      const res = await addItemAction(list.id, storeId, name);
+      const res = await addItemAction(list.id, storeId, name, quantity);
       if (res.error) setError(res.error);
     });
   };

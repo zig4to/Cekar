@@ -9,9 +9,9 @@ import {
   deleteItemAction,
   deleteListAction,
   removeStoreFromListAction,
-  renameItemAction,
   renameListAction,
   toggleItemAction,
+  updateItemAction,
 } from "@/actions/cekar";
 import { createClient } from "@/lib/supabase/client";
 import { rememberList } from "@/lib/cekar/preview";
@@ -21,13 +21,14 @@ import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/
 import StoreSection from "@/components/cekar/StoreSection";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
+import ItemEditDialog from "@/components/cekar/ItemEditDialog";
 import type { CekarItem, CekarListDetail } from "@/lib/types/database.types";
 
 type OptimisticOp =
   | { type: "toggle"; id: string; checked: boolean }
   | { type: "add"; item: CekarItem }
   | { type: "delete"; id: string }
-  | { type: "rename"; id: string; name: string };
+  | { type: "edit"; id: string; name: string; quantity: number };
 
 function applyOp(items: CekarItem[], op: OptimisticOp): CekarItem[] {
   switch (op.type) {
@@ -41,8 +42,10 @@ function applyOp(items: CekarItem[], op: OptimisticOp): CekarItem[] {
       return [...items, op.item];
     case "delete":
       return items.filter((i) => i.id !== op.id);
-    case "rename":
-      return items.map((i) => (i.id === op.id ? { ...i, name: op.name } : i));
+    case "edit":
+      return items.map((i) =>
+        i.id === op.id ? { ...i, name: op.name, quantity: op.quantity } : i
+      );
   }
 }
 
@@ -57,7 +60,7 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [renamingList, setRenamingList] = useState(false);
-  const [renamingItem, setRenamingItem] = useState<CekarItem | null>(null);
+  const [editingItem, setEditingItem] = useState<CekarItem | null>(null);
   const [addingStore, setAddingStore] = useState(false);
   const [quickAdd, setQuickAdd] = useState(false);
   const tempSeq = useRef(0);
@@ -90,7 +93,12 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
         name: list.name,
         storeNames: stores.map((s) => s.name),
         storeIds: stores.map((s) => s.id),
-        items: detail.items.map(({ store_id, name, checked }) => ({ store_id, name, checked })),
+        items: detail.items.map(({ store_id, name, checked, quantity }) => ({
+          store_id,
+          name,
+          checked,
+          quantity,
+        })),
         total: detail.items.length,
         checked: detail.items.filter((i) => i.checked).length,
       },
@@ -112,7 +120,7 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
       toggleItemAction(item.id, !item.checked)
     );
 
-  const onAdd = (storeId: string, name: string) => {
+  const onAdd = (storeId: string, name: string, quantity = 1) => {
     const now = new Date().toISOString();
     run(
       {
@@ -127,10 +135,11 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
           checked: false,
           checked_at: null,
           position: Number.MAX_SAFE_INTEGER,
+          quantity,
           created_at: now,
         },
       },
-      () => addItemAction(list.id, storeId, name)
+      () => addItemAction(list.id, storeId, name, quantity)
     );
   };
 
@@ -230,9 +239,9 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
           items={items.filter((i) => i.store_id === store.id)}
           products={products.filter((p) => p.store_id === store.id)}
           onToggle={onToggle}
-          onAdd={(name) => onAdd(store.id, name)}
+          onAdd={(name, quantity) => onAdd(store.id, name, quantity)}
           onDelete={onDelete}
-          onRename={setRenamingItem}
+          onEdit={setEditingItem}
           onRemoveStore={() => onRemoveStore(store.id)}
         />
       ))}
@@ -277,17 +286,14 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
         initialValue={list.name}
         onSubmit={(name) => renameListAction(list.id, name)}
       />
-      <PromptDialog
-        open={renamingItem !== null}
-        onClose={() => setRenamingItem(null)}
-        title="Uredi izdelek"
-        label="Izdelek"
-        initialValue={renamingItem?.name ?? ""}
-        onSubmit={(name) => {
-          const item = renamingItem;
-          if (!item) return;
-          run({ type: "rename", id: item.id, name }, () => renameItemAction(item.id, name));
-        }}
+      <ItemEditDialog
+        item={editingItem}
+        onClose={() => setEditingItem(null)}
+        onSave={(item, name, quantity) =>
+          run({ type: "edit", id: item.id, name, quantity }, () =>
+            updateItemAction(item.id, name, quantity)
+          )
+        }
       />
     </div>
   );

@@ -25,6 +25,12 @@ export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconMinus = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M5 12h14" />
+  </Base>
+);
+
 export const IconSearch = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <circle cx="11" cy="11" r="7" />

@@ -68,6 +68,7 @@ export type CekarItem = {
   checked: boolean;
   checked_at: string | null;
   position: number;
+  quantity: number;
   created_at: string;
 };
 
@@ -94,7 +95,12 @@ export type Database = {
         Returns: string;
       };
       cekar_add_item: {
-        Args: { p_list_id: string; p_store_id: string; p_name: string };
+        Args: {
+          p_list_id: string;
+          p_store_id: string;
+          p_name: string;
+          p_quantity?: number;
+        };
         Returns: string;
       };
     };
@@ -121,7 +127,7 @@ export type CekarListSummary = {
 };
 
 // Kar hitro dodajanje potrebuje o izdelkih, ki so že na seznamu.
-export type CekarItemBrief = Pick<CekarItem, "store_id" | "name" | "checked">;
+export type CekarItemBrief = Pick<CekarItem, "store_id" | "name" | "checked" | "quantity">;
 
 // Vse, kar potrebuje pogled enega seznama.
 export type CekarListDetail = {

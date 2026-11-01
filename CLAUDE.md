@@ -61,6 +61,12 @@ enem koraku upserta katalog (`use_count + 1`) in vstavi vrstico na seznam —
 ne vstavljaj v `cekar_items` mimo njega, sicer katalog ne raste.
 Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 
+`0003_item_quantity.sql`: `cekar_items.quantity` (1–999, privzeto 1), RPC
+`cekar_add_item(..., p_quantity default 1)`. Količino nastaviš s
+`QuantityStepper` ob vnosu ali jo vpišeš v ime ("2 mleko", "mleko x2" —
+`parseQuantity` v `src/lib/cekar/text.ts`); urejanje v `ItemEditDialog`
+(svinčnik), prikaz `2×` (`QuantityBadge`) samo pri količini nad 1.
+
 ## Arhitektura
 
 Enako kot Vzlet: server `src/app/(app)/*/page.tsx` → branje prek

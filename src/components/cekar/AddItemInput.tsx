@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { IconPlus } from "@/components/ui/icons";
-import { norm } from "@/lib/cekar/text";
+import { norm, parseQuantity } from "@/lib/cekar/text";
+import QuantityStepper from "@/components/cekar/QuantityStepper";
 import type { CekarProduct } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 12;
@@ -10,7 +11,8 @@ const MAX_SUGGESTIONS = 12;
 // Vnos izdelka za eno trgovino. Med pisanjem (ali ob fokusu) se pod poljem
 // pokažejo predlogi iz kataloga SAMO te trgovine — izdelki, ki so bili tu
 // že kdaj dodani, najpogostejši najprej. Izdelki, ki so že neodkljukani na
-// seznamu, se ne predlagajo.
+// seznamu, se ne predlagajo. Količino nastaviš s števcem ob polju ali jo
+// vpišeš v ime ("2 mleko", "mleko x2").
 export default function AddItemInput({
   storeName,
   products,
@@ -20,13 +22,16 @@ export default function AddItemInput({
   storeName: string;
   products: CekarProduct[]; // že razvrščeni po use_count / last_used_at
   exclude: string[];
-  onAdd: (name: string) => void;
+  onAdd: (name: string, quantity: number) => void;
 }) {
   const [value, setValue] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const q = norm(value);
+  // predlogi iščejo po imenu brez vpisane količine ("2 mle" najde "Mleko")
+  const parsed = parseQuantity(value, quantity);
+  const q = norm(parsed.name);
   const excluded = new Set(exclude.map(norm));
   const suggestions = products
     .filter((p) => !excluded.has(norm(p.name)) && (!q || norm(p.name).includes(q)))
@@ -40,8 +45,9 @@ export default function AddItemInput({
   const add = (name: string) => {
     const clean = name.trim();
     if (!clean) return;
-    onAdd(clean);
+    onAdd(clean, parsed.quantity);
     setValue("");
+    setQuantity(1);
     // fokus ostane v polju, da lahko na telefonu dodajaš zapored
     inputRef.current?.focus();
   };
@@ -53,7 +59,7 @@ export default function AddItemInput({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          add(value);
+          add(parsed.name);
         }}
         className="flex items-center gap-2"
       >
@@ -66,6 +72,14 @@ export default function AddItemInput({
           placeholder={`Dodaj v ${storeName} …`}
           enterKeyHint="done"
           className="min-w-0 flex-1 rounded-md border border-transparent bg-gray-50 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:bg-gray-800 dark:placeholder:text-gray-500"
+        />
+        <QuantityStepper
+          value={parsed.quantity}
+          onChange={(n) => {
+            // količina, vpisana v ime, se ob kliku prenese v števec
+            if (parsed.name !== value.trim()) setValue(parsed.name);
+            setQuantity(n);
+          }}
         />
         <button
           type="submit"

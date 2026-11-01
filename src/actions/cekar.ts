@@ -190,7 +190,8 @@ export async function removeStoreFromListAction(
 export async function addItemAction(
   listId: string,
   storeId: string,
-  name: string
+  name: string,
+  quantity = 1
 ): Promise<CekarResult> {
   if (!name.trim()) return { error: "Izdelek ne sme biti prazen." };
   const c = await ctx();
@@ -210,6 +211,7 @@ export async function addItemAction(
     p_list_id: listId,
     p_store_id: storeId,
     p_name: name,
+    p_quantity: quantity,
   });
   if (error) return fail(undefined, "Izdelka ni bilo mogoče dodati.");
   return done();
@@ -229,17 +231,21 @@ export async function toggleItemAction(
   return done();
 }
 
-export async function renameItemAction(
+export async function updateItemAction(
   itemId: string,
-  name: string
+  name: string,
+  quantity: number
 ): Promise<CekarResult> {
   const clean = name.trim();
   if (!clean) return { error: "Izdelek ne sme biti prazen." };
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) {
+    return { error: "Količina mora biti med 1 in 999." };
+  }
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
   const { error } = await c.supabase
     .from("cekar_items")
-    .update({ name: clean })
+    .update({ name: clean, quantity })
     .eq("id", itemId);
   if (error) return fail(undefined, "Shranjevanje ni uspelo.");
   return done();

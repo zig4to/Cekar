@@ -11,6 +11,7 @@ import {
   IconX,
 } from "@/components/ui/icons";
 import AddItemInput from "@/components/cekar/AddItemInput";
+import QuantityBadge from "@/components/cekar/QuantityBadge";
 import clsx from "@/lib/utils/clsx";
 import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
@@ -31,7 +32,7 @@ export default function StoreSection({
   onToggle,
   onAdd,
   onDelete,
-  onRename,
+  onEdit,
   onRemoveStore,
 }: {
   listId: string;
@@ -39,9 +40,9 @@ export default function StoreSection({
   items: CekarItem[];
   products: CekarProduct[];
   onToggle: (item: CekarItem) => void;
-  onAdd: (name: string) => void;
+  onAdd: (name: string, quantity: number) => void;
   onDelete: (item: CekarItem) => void;
-  onRename: (item: CekarItem) => void;
+  onEdit: (item: CekarItem) => void;
   onRemoveStore: () => void;
 }) {
   const open = items
@@ -152,13 +153,14 @@ export default function StoreSection({
                   >
                     {item.name}
                   </span>
+                  <QuantityBadge quantity={item.quantity} checked={item.checked} />
                 </button>
                 {!isTemp(item) && (
                   <>
                     <button
                       type="button"
                       aria-label={`Uredi ${item.name}`}
-                      onClick={() => onRename(item)}
+                      onClick={() => onEdit(item)}
                       className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                     >
                       <IconPencil />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { IconArrowLeft, IconCheck, IconChevronDown, IconStore } from "@/components/ui/icons";
 import { collapsedKey } from "@/components/cekar/StoreSection";
+import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { cachedList, cachedStoreName } from "@/lib/cekar/preview";
 import clsx from "@/lib/utils/clsx";
 
@@ -108,6 +109,7 @@ export default function ListPreview() {
                       >
                         {item.name}
                       </span>
+                      <QuantityBadge quantity={item.quantity} checked={item.checked} />
                     </li>
                   ))}
                 </ul>
