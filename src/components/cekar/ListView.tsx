@@ -19,6 +19,7 @@ import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
+import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import type { CekarItem, CekarListDetail } from "@/lib/types/database.types";
 
 type OptimisticOp =
@@ -57,6 +58,7 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
   const [renamingList, setRenamingList] = useState(false);
   const [renamingItem, setRenamingItem] = useState<CekarItem | null>(null);
   const [addingStore, setAddingStore] = useState(false);
+  const [quickAdd, setQuickAdd] = useState(false);
   const tempSeq = useRef(0);
 
   // Živo osveževanje: ob katerikoli spremembi izdelkov/trgovin na seznamih
@@ -131,7 +133,8 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
   const availableStores = allStores.filter((s) => !stores.some((ls) => ls.id === s.id));
 
   return (
-    <div className="space-y-4">
+    // pb-24: zadnja trgovina ne sme ostati pod plavajočim gumbom
+    <div className="space-y-4 pb-24">
       <div className="flex items-center gap-2">
         <Link
           href="/"
@@ -224,6 +227,24 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
         <IconPlus /> Dodaj trgovino
       </button>
 
+      <button
+        type="button"
+        onClick={() => setQuickAdd(true)}
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3.5 font-medium text-white shadow-lg shadow-emerald-900/30 hover:bg-emerald-700"
+      >
+        <IconPlus className="h-5 w-5" />
+        Hitro dodaj
+      </button>
+
+      <QuickAddDialog
+        open={quickAdd}
+        onClose={() => setQuickAdd(false)}
+        listStores={stores}
+        allStores={allStores}
+        products={products}
+        items={items}
+        onAdd={onAdd}
+      />
       <AddStoreDialog
         open={addingStore}
         onClose={() => setAddingStore(false)}

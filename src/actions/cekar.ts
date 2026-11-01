@@ -195,6 +195,17 @@ export async function addItemAction(
   if (!name.trim()) return { error: "Izdelek ne sme biti prazen." };
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
+  // Hitro dodajanje lahko izbere trgovino, ki še ni na seznamu — dodamo jo.
+  const { data: link } = await c.supabase
+    .from("cekar_list_stores")
+    .select("id")
+    .eq("list_id", listId)
+    .eq("store_id", storeId)
+    .maybeSingle();
+  if (!link) {
+    const res = await addStoreToListAction(listId, storeId);
+    if (res.error) return res;
+  }
   const { error } = await c.supabase.rpc("cekar_add_item", {
     p_list_id: listId,
     p_store_id: storeId,

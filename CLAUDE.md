@@ -74,6 +74,10 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
   brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
   (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
+- Plavajoči gumb „Hitro dodaj“ v `ListView` odpre `QuickAddDialog`: predlogi
+  iz kataloga **vseh** trgovin z oznako trgovine (npr. „Malinovec · Lidl“),
+  za nov izdelek gumbi trgovin. `addItemAction` trgovino, ki še ni na
+  seznamu, doda sama. `norm()` (brez šumnikov) je v `src/lib/cekar/text.ts`.
 - `ListView` uporablja `useOptimistic` (takojšnje odkljukanje/dodajanje;
   začasni id `temp-N`, na katerem so akcije onemogočene) in Supabase realtime
   kanal, ki ob spremembi drugega člana pokliče `router.refresh()`.

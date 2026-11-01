@@ -2,18 +2,10 @@
 
 import { useRef, useState } from "react";
 import { IconPlus } from "@/components/ui/icons";
+import { norm } from "@/lib/cekar/text";
 import type { CekarProduct } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 12;
-
-// Primerjava brez velikih črk in šumnikov ("cesen" najde "Česen").
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim();
-}
 
 // Vnos izdelka za eno trgovino. Med pisanjem (ali ob fokusu) se pod poljem
 // pokažejo predlogi iz kataloga SAMO te trgovine — izdelki, ki so bili tu
