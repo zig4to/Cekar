@@ -69,6 +69,7 @@ export type CekarListStore = {
   store_id: string;
   position: number;
   spent: number | null; // zapravljeno v tej trgovini (EUR)
+  spent_at: string | null; // prvi vnos zneska (trigger)
   created_at: string;
 };
 
@@ -170,4 +171,11 @@ export type CekarListDetail = {
   categories: CekarCategory[]; // v vrstnem redu (= vrstni red skupin)
   receipts: CekarReceipt[]; // slike računov tega seznama (najnovejši zadnji)
   spent: Record<string, number>; // store_id → zapravljeno (samo vnesene)
+};
+
+// Statistika: zapravljeno po mesecih (mesec = "2026-11", čas Europe/Ljubljana).
+export type CekarSpentMonth = {
+  month: string;
+  total: number;
+  stores: { store: CekarStore; total: number }[]; // padajoče po znesku
 };

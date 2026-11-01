@@ -4,9 +4,9 @@ import { getAuthUser } from "@/lib/supabase/auth";
 import { getMembership } from "@/lib/data/cekar";
 import SsoHashCleanup from "@/components/auth/SsoHashCleanup";
 import Onboarding from "@/components/cekar/Onboarding";
-import { IconBasket, IconSettings } from "@/components/ui/icons";
+import { IconBasket, IconChart, IconSettings } from "@/components/ui/icons";
 
-// Ogrodje aplikacije Cekar: zgornja vrstica (logo → domov, nastavitve), pod
+// Ogrodje aplikacije Cekar: zgornja vrstica (logo → domov, statistika, nastavitve), pod
 // njo drseča vsebina. Uporabnik brez gospodinjstva namesto vsebine vidi
 // Onboarding (ustvari gospodinjstvo / pridruži se s kodo).
 export default async function AppLayout({
@@ -30,13 +30,23 @@ export default async function AppLayout({
           Cekar
         </Link>
         {membership && (
-          <Link
-            href="/nastavitve"
-            aria-label="Nastavitve"
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-          >
-            <IconSettings className="h-5 w-5" />
-          </Link>
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/statistika"
+              aria-label="Statistika"
+              title="Statistika"
+              className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            >
+              <IconChart className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/nastavitve"
+              aria-label="Nastavitve"
+              className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            >
+              <IconSettings className="h-5 w-5" />
+            </Link>
+          </nav>
         )}
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">

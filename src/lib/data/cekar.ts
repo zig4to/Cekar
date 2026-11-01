@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CekarListDetail,
   CekarListSummary,
+  CekarSpentMonth,
   CekarMember,
   CekarMembership,
   Database,
@@ -191,4 +192,42 @@ export async function getShoppingListNames(supabase: Supa) {
     .is("archived_at", null)
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+// Ključ meseca ("2026-11") po ljubljanskem času.
+export const monthKey = (d: Date) => MONTH_KEY.format(d).slice(0, 7);
+
+const MONTH_KEY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Ljubljana",
+  year: "numeric",
+  month: "2-digit",
+});
+
+// Zneski iz vseh seznamov (tudi arhiviranih), združeni po mesecu vnosa.
+export async function getSpentByMonth(supabase: Supa): Promise<CekarSpentMonth[]> {
+  const [{ data: rows }, stores] = await Promise.all([
+    supabase
+      .from("cekar_list_stores")
+      .select("store_id, spent, spent_at")
+      .not("spent", "is", null),
+    getStores(supabase),
+  ]);
+  const byId = new Map(stores.map((s) => [s.id, s]));
+  const months = new Map<string, Map<string, number>>();
+  for (const r of rows ?? []) {
+    const store = byId.get(r.store_id);
+    if (!store || r.spent === null || !r.spent_at) continue;
+    const key = monthKey(new Date(r.spent_at));
+    const perStore = months.get(key) ?? new Map<string, number>();
+    perStore.set(r.store_id, (perStore.get(r.store_id) ?? 0) + Number(r.spent));
+    months.set(key, perStore);
+  }
+  return [...months]
+    .map(([month, perStore]) => {
+      const list = [...perStore]
+        .map(([id, total]) => ({ store: byId.get(id)!, total }))
+        .sort((a, b) => b.total - a.total);
+      return { month, total: list.reduce((a, s) => a + s.total, 0), stores: list };
+    })
+    .sort((a, b) => b.month.localeCompare(a.month));
 }
