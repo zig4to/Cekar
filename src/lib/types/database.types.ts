@@ -30,6 +30,7 @@ export type CekarStore = {
   position: number;
   default_items: string[]; // dodajo se sami, ko trgovino dodaš na seznam
   single_item: boolean; // trgovina z enim izdelkom: na seznamu ena vrstica
+  unit_price: number | null; // cena za kos (single_item) → spent ob odkljukanju
   created_at: string;
 };
 

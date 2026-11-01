@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   createCategoryAction,
   createStoreAction,
@@ -24,6 +25,7 @@ import {
   IconArrowUp,
   IconCheck,
   IconCopy,
+  IconList,
   IconLogout,
   IconPencil,
   IconPlus,
@@ -207,7 +209,21 @@ export default function Settings({
           {stores.map((s, i) => (
             <li key={s.id} className="flex items-center gap-1 py-1.5">
               <StoreLogo name={s.name} className="mr-1.5 h-5 w-5" />
-              <span className="min-w-0 flex-1 truncate text-sm">{s.name}</span>
+              <Link
+                href={`/nastavitve/trgovina/${s.id}`}
+                title="Uredi shranjene izdelke"
+                className="min-w-0 flex-1 truncate text-sm hover:underline"
+              >
+                {s.name}
+              </Link>
+              <Link
+                href={`/nastavitve/trgovina/${s.id}`}
+                aria-label={`Izdelki trgovine ${s.name}`}
+                title="Shranjeni izdelki"
+                className={ICON_BTN}
+              >
+                <IconList />
+              </Link>
               <button
                 type="button"
                 aria-label="Gor"

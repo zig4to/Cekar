@@ -88,6 +88,18 @@ export default function SpentButton({
           </Field>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={value === ""}
+              onClick={() => {
+                setValue("");
+                setError(null);
+                document.getElementById("spent-value")?.focus();
+              }}
+            >
+              Počisti
+            </Button>
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               Prekliči
             </Button>

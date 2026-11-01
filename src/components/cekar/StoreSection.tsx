@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ComponentProps } from "react";
+import { useRouter } from "next/navigation";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import {
   IconCheck,
   IconChevronDown,
+  IconList,
   IconMinus,
   IconPencil,
   IconPlus,
@@ -70,6 +72,7 @@ export default function StoreSection({
   receiptProps?: Omit<ComponentProps<typeof ReceiptButtons>, "store">;
   spent?: number | null; // zapravljeno v tej trgovini
 }) {
+  const router = useRouter();
   const open = items
     .filter((i) => !i.checked)
     .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
@@ -150,20 +153,25 @@ export default function StoreSection({
         </span>
         <Menu label={`Možnosti za ${store.name}`}>
           {(close) => (
-            <MenuItem
-              danger
-              onClick={() => {
-                close();
-                if (
-                  items.length === 0 ||
-                  window.confirm(`Odstranim ${store.name} in njene izdelke s tega seznama?`)
-                ) {
+            <>
+              <MenuItem
+                onClick={() => {
+                  close();
+                  router.push(
+                    `/nastavitve/trgovina/${store.id}?nazaj=${encodeURIComponent(`/seznam/${listId}`)}`
+                  );
+                }}
+              >
+                <IconList /> Uredi izdelke trgovine
+              </MenuItem>
+              <RemoveStoreItems
+                itemCount={items.length}
+                onRemove={() => {
+                  close();
                   onRemoveStore();
-                }
-              }}
-            >
-              <IconTrash /> Odstrani s seznama
-            </MenuItem>
+                }}
+              />
+            </>
           )}
         </Menu>
       </header>
@@ -273,5 +281,45 @@ export default function StoreSection({
         </>
       )}
     </section>
+  );
+}
+
+// Odstranitev trgovine s potrditvijo v istem meniju (namesto okna čez zaslon):
+// prvi klik pod postavko odpre gumb "Potrdi izbris". Prazna trgovina gre takoj.
+function RemoveStoreItems({
+  itemCount,
+  onRemove,
+}: {
+  itemCount: number;
+  onRemove: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <>
+      <MenuItem
+        danger
+        onClick={() => (itemCount === 0 ? onRemove() : setConfirming((v) => !v))}
+      >
+        <IconTrash /> Odstrani s seznama
+      </MenuItem>
+      {confirming && (
+        <div className="mt-1 border-t border-gray-200 px-1 pb-1 pt-2 dark:border-gray-700">
+          <p className="mb-2 px-1 text-xs text-gray-500 dark:text-gray-400">
+            Odstranijo se tudi izdelki ({itemCount}).
+          </p>
+          <button
+            type="button"
+            autoFocus
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="w-full rounded bg-red-600 px-2 py-1.5 text-sm font-semibold text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+          >
+            Potrdi izbris
+          </button>
+        </div>
+      )}
+    </>
   );
 }

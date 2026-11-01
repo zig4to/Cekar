@@ -76,6 +76,25 @@ export async function getProducts(supabase: Supa) {
   return data ?? [];
 }
 
+// Ena trgovina in njen katalog izdelkov (stran za urejanje kataloga).
+export async function getStore(supabase: Supa, storeId: string) {
+  const { data } = await supabase
+    .from("cekar_stores")
+    .select("*")
+    .eq("id", storeId)
+    .maybeSingle();
+  return data;
+}
+
+export async function getStoreProducts(supabase: Supa, storeId: string) {
+  const { data } = await supabase
+    .from("cekar_products")
+    .select("*")
+    .eq("store_id", storeId)
+    .order("name");
+  return data ?? [];
+}
+
 export async function getListSummaries(supabase: Supa): Promise<CekarListSummary[]> {
   const [{ data: lists }, { data: listStores }, { data: items }, stores] =
     await Promise.all([

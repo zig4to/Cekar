@@ -1,17 +1,25 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import Menu, { MenuItem } from "@/components/ui/Menu";
-import { IconCheck, IconMinus, IconPlus, IconTrash } from "@/components/ui/icons";
+import Modal from "@/components/ui/Modal";
+import Button from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Input";
+import { IconCheck, IconEuro, IconMinus, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
-import { MAX_QUANTITY } from "@/lib/cekar/text";
+import { setStoreUnitPriceAction } from "@/actions/cekar";
+import { MAX_QUANTITY, formatEur, parseAmount } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
 import type { CekarItem, CekarStore } from "@/lib/types/database.types";
 
 // Trgovina z enim samim izdelkom (Mlekarica → Domače mleko, Domača Jajca →
 // Jajca): namesto sekcije trgovine ena vrstica — logo, izdelek, kljukica in
 // količina. Če izdelka na seznamu ni (npr. izbrisan), ga + doda.
+// Z nastavljeno ceno za kos (meni ⋯) je ob izdelku znesek količina × cena,
+// ki se ob odkljukanju zapiše kot zapravljeno v tej trgovini.
 export default function SingleItemStore({
+  listId,
   store,
   item,
   template = false,
@@ -20,6 +28,7 @@ export default function SingleItemStore({
   onAdd,
   onRemoveStore,
 }: {
+  listId: string;
   store: CekarStore;
   item: CekarItem | undefined;
   template?: boolean; // stalni seznam: brez odkljukanja
@@ -31,6 +40,8 @@ export default function SingleItemStore({
   const name = item?.name ?? store.default_items[0] ?? store.name;
   const pending = item?.id.startsWith("temp-") ?? false;
   const checked = item?.checked ?? false;
+  const [priceOpen, setPriceOpen] = useState(false);
+  const price = store.unit_price === null ? null : Number(store.unit_price);
 
   return (
     <section
@@ -68,6 +79,19 @@ export default function SingleItemStore({
           {name}
         </span>
         {item && <QuantityBadge quantity={item.quantity} checked={checked} />}
+        {!template && item && price !== null && (
+          <span
+            title={`${item.quantity} × ${formatEur(price)}`}
+            className={clsx(
+              "ml-auto whitespace-nowrap text-xs font-semibold tabular-nums",
+              checked
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-gray-500 dark:text-gray-400"
+            )}
+          >
+            {formatEur(Math.round(item.quantity * price * 100) / 100)}
+          </span>
+        )}
       </button>
 
       {!item ? (
@@ -106,17 +130,117 @@ export default function SingleItemStore({
       )}
       <Menu label={`Možnosti za ${store.name}`}>
         {(close) => (
-          <MenuItem
-            danger
-            onClick={() => {
-              close();
-              onRemoveStore();
-            }}
-          >
-            <IconTrash /> Odstrani s seznama
-          </MenuItem>
+          <>
+            <MenuItem
+              onClick={() => {
+                close();
+                setPriceOpen(true);
+              }}
+            >
+              <IconEuro />
+              {price === null ? `Nastavi ceno: ${name}` : `Cena: ${formatEur(price)} / kos`}
+            </MenuItem>
+            <MenuItem
+              danger
+              onClick={() => {
+                close();
+                onRemoveStore();
+              }}
+            >
+              <IconTrash /> Odstrani s seznama
+            </MenuItem>
+          </>
         )}
       </Menu>
+      <UnitPriceDialog
+        open={priceOpen}
+        onClose={() => setPriceOpen(false)}
+        listId={listId}
+        storeId={store.id}
+        productName={name}
+        price={price}
+      />
     </section>
+  );
+}
+
+// Cena za kos; prazno polje ceno pobriše (znesek se potem ne računa več).
+function UnitPriceDialog({
+  open,
+  onClose,
+  listId,
+  storeId,
+  productName,
+  price,
+}: {
+  open: boolean;
+  onClose: () => void;
+  listId: string;
+  storeId: string;
+  productName: string;
+  price: number | null;
+}) {
+  const initial = price === null ? "" : price.toFixed(2).replace(".", ",");
+  const [value, setValue] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [wasOpen, setWasOpen] = useState(open);
+
+  // ob vsakem odprtju začni z aktualno ceno
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setValue(initial);
+      setError(null);
+    }
+  }
+
+  const submit = () => {
+    const amount = parseAmount(value);
+    if (Number.isNaN(amount)) {
+      setError("Vpiši ceno, npr. 1,20.");
+      return;
+    }
+    startTransition(async () => {
+      const res = await setStoreUnitPriceAction(listId, storeId, amount);
+      if (res.error) setError(res.error);
+      else onClose();
+    });
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Cena · ${productName}`}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+        className="space-y-4"
+      >
+        <Field label="Cena za kos (€)" htmlFor="unit-price">
+          <Input
+            id="unit-price"
+            autoFocus
+            inputMode="decimal"
+            placeholder="0,00"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </Field>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Ko izdelek odkljukaš, se zapravljeno izračuna kot količina × cena. Prazno
+          polje ceno pobriše.
+        </p>
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Prekliči
+          </Button>
+          <Button type="submit" disabled={pending}>
+            Shrani
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

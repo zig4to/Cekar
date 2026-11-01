@@ -334,11 +334,81 @@ export async function toggleItemAction(
 ): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
-  const { error } = await c.supabase
+  const { data: item, error } = await c.supabase
     .from("cekar_items")
     .update({ checked, checked_at: checked ? new Date().toISOString() : null })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("list_id, store_id, quantity")
+    .maybeSingle();
   if (error) return fail(undefined, "Shranjevanje ni uspelo.");
+  if (item) {
+    const res = await syncUnitPriceSpent(c.supabase, item.list_id, item.store_id, checked ? item.quantity : null);
+    if (res.error) return res;
+  }
+  return done();
+}
+
+// Trgovina z enim izdelkom in nastavljeno ceno: zapravljeno = količina × cena
+// (quantity null = ni kupljeno → znesek pobriši). Drugih trgovin ne tika.
+async function syncUnitPriceSpent(
+  supabase: Supa,
+  listId: string,
+  storeId: string,
+  quantity: number | null
+): Promise<CekarResult> {
+  const { data: store } = await supabase
+    .from("cekar_stores")
+    .select("single_item, unit_price")
+    .eq("id", storeId)
+    .maybeSingle();
+  if (!store?.single_item || store.unit_price === null) return {};
+  const spent =
+    quantity === null ? null : Math.round(quantity * Number(store.unit_price) * 100) / 100;
+  const { error } = await supabase
+    .from("cekar_list_stores")
+    .update({ spent })
+    .eq("list_id", listId)
+    .eq("store_id", storeId);
+  return error ? fail(undefined, "Zneska ni bilo mogoče shraniti.") : {};
+}
+
+// Cena za kos (Mlekarica, Domača Jajca). Če je izdelek na tem seznamu že
+// kupljen, se znesek takoj preračuna; drugi (pretekli) seznami ostanejo.
+export async function setStoreUnitPriceAction(
+  listId: string,
+  storeId: string,
+  price: number | null
+): Promise<CekarResult> {
+  if (price !== null && !(price >= 0 && price < 100_000_000)) {
+    return { error: "Neveljavna cena." };
+  }
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_stores")
+    .update({ unit_price: price === null ? null : Math.round(price * 100) / 100 })
+    .eq("id", storeId);
+  if (error) return fail(undefined, "Cene ni bilo mogoče shraniti.");
+  const { data: bought } = await c.supabase
+    .from("cekar_items")
+    .select("quantity")
+    .eq("list_id", listId)
+    .eq("store_id", storeId)
+    .eq("checked", true);
+  if (bought && bought.length > 0) {
+    const qty = bought.reduce((a, b) => a + b.quantity, 0);
+    if (price === null) {
+      // brez cene zneska ne računamo več — pobrišemo izračunanega
+      await c.supabase
+        .from("cekar_list_stores")
+        .update({ spent: null })
+        .eq("list_id", listId)
+        .eq("store_id", storeId);
+    } else {
+      const res = await syncUnitPriceSpent(c.supabase, listId, storeId, qty);
+      if (res.error) return res;
+    }
+  }
   return done();
 }
 
@@ -470,6 +540,171 @@ export async function reorderStoresAction(
     )
   );
   if (results.some((r) => r.error)) return fail(undefined, "Shranjevanje ni uspelo.");
+  return done();
+}
+
+// ===== Katalog izdelkov trgovine (vir predlogov) =====
+// Urejanje kataloga ne spreminja vrstic na seznamih (te imajo svoje ime).
+
+const PRODUCT_DUP = "Ta izdelek v tej trgovini že obstaja.";
+
+export async function createProductAction(
+  storeId: string,
+  name: string
+): Promise<CekarResult> {
+  const clean = name.trim();
+  if (!clean) return { error: "Izdelek ne sme biti prazen." };
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const categoryId = await guessCategoryFor(c.supabase, clean);
+  const { error } = await c.supabase.from("cekar_products").insert({
+    household_id: c.householdId,
+    store_id: storeId,
+    name: clean,
+    category_id: categoryId,
+    use_count: 0,
+  });
+  if (error) {
+    return fail(error.code === "23505" ? PRODUCT_DUP : undefined, "Izdelka ni bilo mogoče dodati.");
+  }
+  return done();
+}
+
+export async function renameProductAction(
+  productId: string,
+  name: string
+): Promise<CekarResult> {
+  const clean = name.trim();
+  if (!clean) return { error: "Izdelek ne sme biti prazen." };
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_products")
+    .update({ name: clean })
+    .eq("id", productId);
+  if (error) {
+    return fail(error.code === "23505" ? PRODUCT_DUP : undefined, "Preimenovanje ni uspelo.");
+  }
+  return done();
+}
+
+export async function setProductCategoryAction(
+  productId: string,
+  categoryId: string | null
+): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_products")
+    .update({ category_id: categoryId })
+    .eq("id", productId);
+  if (error) return fail(undefined, "Kategorije ni bilo mogoče shraniti.");
+  return done();
+}
+
+// Vrstice na seznamih ostanejo (product_id → null), izgine le predlog.
+export async function deleteProductAction(productId: string): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase.from("cekar_products").delete().eq("id", productId);
+  if (error) return fail(undefined, "Brisanje ni uspelo.");
+  return done();
+}
+
+// ===== Skupni seznam izdelkov (/izdelki) =====
+// Izdelek "v več trgovinah" = ena vrstica cekar_products na trgovino z istim
+// imenom. Tako ga predlogi ob dodajanju v vsako od teh trgovin najdejo sami.
+// ids = vse vrstice izdelka (po ena na trgovino).
+
+export async function createCatalogProductAction(
+  name: string,
+  storeIds: string[]
+): Promise<CekarResult> {
+  const clean = name.trim();
+  if (!clean) return { error: "Izdelek ne sme biti prazen." };
+  if (storeIds.length === 0) return { error: "Izberi vsaj eno trgovino." };
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const categoryId = await guessCategoryFor(c.supabase, clean);
+  // unikatni indeks je na (store_id, lower(name)) — že obstoječe preskočimo
+  const results = await Promise.all(
+    storeIds.map((storeId) =>
+      c.supabase.from("cekar_products").insert({
+        household_id: c.householdId,
+        store_id: storeId,
+        name: clean,
+        category_id: categoryId,
+        use_count: 0,
+      })
+    )
+  );
+  if (results.some((r) => r.error && r.error.code !== "23505")) {
+    return fail(undefined, "Izdelka ni bilo mogoče dodati.");
+  }
+  return done();
+}
+
+// Izdelek dobi še eno trgovino (z enako kategorijo kot drugje).
+export async function addProductStoreAction(
+  name: string,
+  storeId: string,
+  categoryId: string | null
+): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase.from("cekar_products").insert({
+    household_id: c.householdId,
+    store_id: storeId,
+    name: name.trim(),
+    category_id: categoryId,
+    use_count: 0,
+  });
+  if (error && error.code !== "23505") return fail(undefined, "Trgovine ni bilo mogoče dodati.");
+  return done();
+}
+
+export async function renameCatalogProductAction(
+  ids: string[],
+  name: string
+): Promise<CekarResult> {
+  const clean = name.trim();
+  if (!clean) return { error: "Izdelek ne sme biti prazen." };
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_products")
+    .update({ name: clean })
+    .in("id", ids);
+  if (error) {
+    return fail(
+      error.code === "23505" ? "Izdelek s tem imenom v eni od trgovin že obstaja." : undefined,
+      "Preimenovanje ni uspelo."
+    );
+  }
+  return done();
+}
+
+export async function setCatalogCategoryAction(
+  ids: string[],
+  categoryId: string | null
+): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_products")
+    .update({ category_id: categoryId })
+    .in("id", ids);
+  if (error) return fail(undefined, "Kategorije ni bilo mogoče shraniti.");
+  return done();
+}
+
+// Odstrani trgovino(e) pri izdelku ali cel izdelek (vse vrstice). Vrstice na
+// seznamih ostanejo (product_id → null).
+export async function deleteCatalogRowsAction(ids: string[]): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase.from("cekar_products").delete().in("id", ids);
+  if (error) return fail(undefined, "Brisanje ni uspelo.");
   return done();
 }
 

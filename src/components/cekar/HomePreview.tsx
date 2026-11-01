@@ -30,24 +30,6 @@ export default function HomePreview() {
           </span>
         </div>
       </div>
-      {template && (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <div className="flex items-center gap-3 px-4 pb-2 pt-4">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <IconRepeat className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="break-words font-medium">{template.name}</p>
-              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
-                {itemsLabel(template.total)}
-              </p>
-            </div>
-          </div>
-          <div className="px-4 pb-4 pt-1">
-            <div className="h-9 rounded-md bg-emerald-600 opacity-80" />
-          </div>
-        </div>
-      )}
       <ul className="space-y-2">
         {lists.map((l) => (
           <li
@@ -74,6 +56,25 @@ export default function HomePreview() {
           </li>
         ))}
       </ul>
+      {template && <hr className="border-gray-300 dark:border-gray-700" />}
+      {template && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <IconRepeat className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="break-words font-medium">{template.name}</p>
+              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                {itemsLabel(template.total)}
+              </p>
+            </div>
+          </div>
+          <div className="px-4 pb-4 pt-1">
+            <div className="h-9 rounded-md bg-emerald-600 opacity-80" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

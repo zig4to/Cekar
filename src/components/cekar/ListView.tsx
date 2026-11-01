@@ -312,6 +312,7 @@ export default function ListView({
         if (store.single_item) {
           return (
             <SingleItemStore
+              listId={list.id}
               key={store.id}
               store={store}
               item={own.find((i) => !i.checked) ?? own[0]}

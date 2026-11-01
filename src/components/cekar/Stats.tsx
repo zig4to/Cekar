@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import StoreLogo from "@/components/cekar/StoreLogo";
-import { IconChevronDown, IconChevronRight } from "@/components/ui/icons";
+import { IconArrowLeft, IconChevronDown, IconChevronRight } from "@/components/ui/icons";
 import { formatEur } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
 import type { CekarSpentMonth } from "@/lib/types/database.types";
@@ -49,7 +50,16 @@ export default function Stats({
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Statistika</h1>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/"
+          aria-label="Nazaj na seznam"
+          className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+        >
+          <IconArrowLeft />
+        </Link>
+        <h1 className="text-xl font-semibold">Statistika</h1>
+      </div>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <p className="text-sm text-gray-500 dark:text-gray-400">

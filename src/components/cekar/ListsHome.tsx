@@ -17,8 +17,8 @@ import type {
   CekarStore,
 } from "@/lib/types/database.types";
 
-// Domača stran: na vrhu stalni seznam (tedenski nakup, gumb "Zapiši na
-// seznam"), pod njim vsi aktivni nakupovalni seznami. Vsaka kartica ima gumb
+// Domača stran: vsi aktivni nakupovalni seznami, pod njimi stalni seznam
+// (tedenski nakup, gumb "Zapiši na seznam"). Vsaka kartica ima gumb
 // za hitro dodajanje izdelka, ne da bi odprl seznam.
 export default function ListsHome({
   lists,
@@ -86,38 +86,6 @@ export default function ListsHome({
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      {template && (
-        <section className="overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <Link
-            href={`/seznam/${template.id}`}
-            className="flex items-center gap-3 px-4 pb-2 pt-4"
-          >
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <IconRepeat className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="break-words font-medium">{template.name}</p>
-              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
-                {template.total === 0
-                  ? "Dodaj izdelke, ki jih kupuješ vsak teden"
-                  : `${itemsLabel(template.total)} · ${template.storeNames.join(" · ")}`}
-              </p>
-            </div>
-            <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
-          </Link>
-          <div className="px-4 pb-4 pt-1">
-            <Button
-              onClick={() => setWriting(true)}
-              disabled={template.total === 0}
-              className="w-full"
-            >
-              <IconPlus />
-              Zapiši na seznam
-            </Button>
-          </div>
-        </section>
-      )}
-
       {shoppingLists.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
           <IconBasket className="h-10 w-10 text-gray-400 dark:text-gray-600" />
@@ -172,6 +140,39 @@ export default function ListsHome({
             );
           })}
         </ul>
+      )}
+
+      {template && <hr className="border-gray-300 dark:border-gray-700" />}
+      {template && (
+        <section className="overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <Link
+            href={`/seznam/${template.id}`}
+            className="flex items-center gap-3 px-4 pb-2 pt-4"
+          >
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <IconRepeat className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="break-words font-medium">{template.name}</p>
+              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                {template.total === 0
+                  ? "Dodaj izdelke, ki jih kupuješ vsak teden"
+                  : `${itemsLabel(template.total)} · ${template.storeNames.join(" · ")}`}
+              </p>
+            </div>
+            <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+          </Link>
+          <div className="px-4 pb-4 pt-1">
+            <Button
+              onClick={() => setWriting(true)}
+              disabled={template.total === 0}
+              className="w-full"
+            >
+              <IconPlus />
+              Zapiši na seznam
+            </Button>
+          </div>
+        </section>
       )}
 
       <QuickAddDialog

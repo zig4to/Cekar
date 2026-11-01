@@ -86,9 +86,14 @@ ljubljanskem času (`monthKey`), tekoči mesec pride s strežnika.
 izdelkom (Mlekarica → Domače mleko, Domača Jajca → Domača jajca) je na seznamu
 ena vrstica (`SingleItemStore`: logo, ime izdelka, kljukica, − / +) namesto
 sekcije. Izdelek = `default_items[1]`. Nastavlja se zaenkrat samo v bazi.
+`0012_store_unit_price.sql`: `cekar_stores.unit_price` — cena za kos, nastavi se
+v meniju ⋯ vrstice `SingleItemStore` (`setStoreUnitPriceAction`). Ob odkljukanju
+`toggleItemAction` (`syncUnitPriceSpent`) zapiše `cekar_list_stores.spent` =
+količina × cena, ob odznačitvi ga pobriše; sprememba cene preračuna samo
+trenutni seznam.
 
 `0007_template_list.sql`: `cekar_lists.is_template` — **stalni seznam** (en na
-gospodinjstvo, partial unique index), pripet na vrh `ListsHome`. Ureja se kot
+gospodinjstvo, partial unique index), na dnu `ListsHome` (pod seznami). Ureja se kot
 navaden seznam (`ListView`/`StoreSection` s `template` = brez odkljukanja, brez
 brisanja). „Zapiši na seznam“ (`WriteToListDialog` → `copyTemplateAction`)
 izbrane izdelke prepiše na obstoječi ali nov seznam (preskoči že neodkljukane,
@@ -112,7 +117,8 @@ privzeti nabor prek `cekar_seed_categories` (samo interno, brez EXECUTE).
 (svinčnik), prikaz `2×` (`QuantityBadge`) samo pri količini nad 1.
 
 Logotipi trgovin: `public/logos/*` (favicon-i trgovin), `StoreLogo` jih
-prepozna po imenu (regex v `LOGOS`); neznana trgovina dobi prvo črko.
+prepozna po imenu (regex v `LOGOS`); neznana trgovina dobi prvo črko. `0013_domace_meso.sql`
+doda navadno trgovino „Domače meso“ (logo `domace-meso.svg`).
 
 ## Arhitektura
 
@@ -127,6 +133,14 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
   brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
   (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
+- `/izdelki` `ProductsCatalog` (gumb v zgornji vrstici) — skupni seznam izdelkov:
+  vrstice `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri
+  njem = vrstice. Dodaš trgovino → nova vrstica (`use_count` 0), zato se izdelek
+  takoj pokaže med predlogi te trgovine. Zadnje trgovine ni mogoče odznačiti.
+- `/nastavitve/trgovina/[id]` `StoreProducts` — urejanje kataloga trgovine
+  (`cekar_products`: dodaj, preimenuj, kategorija, izbriši); vrstic na
+  seznamih ne spreminja. Odpre se iz Nastavitev (ime trgovine) ali iz menija
+  ⋯ trgovine na seznamu (`?nazaj=/seznam/<id>` za gumb nazaj).
 - Plavajoči gumb „Hitro dodaj“ v `ListView` in gumb + na vsaki kartici v
   `ListsHome` odpreta `QuickAddDialog`: predlogi
   iz kataloga **vseh** trgovin z oznako trgovine (npr. „Malinovec · Lidl“),

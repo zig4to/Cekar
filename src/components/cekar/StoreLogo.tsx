@@ -17,6 +17,7 @@ const LOGOS: [RegExp, string][] = [
   [/lekarn/, "/logos/lekarna.svg"],
   [/mlekar/, "/logos/mlekarica.svg"],
   [/jajc/, "/logos/domaca-jajca.svg"],
+  [/\bmeso\b|mesnic/, "/logos/domace-meso.svg"],
 ];
 
 export function storeLogo(name: string) {
