@@ -49,6 +49,22 @@ export const IconEuro = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconEye = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+
+export const IconEyeOff = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M10.7 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.2 3.1" />
+    <path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    <path d="m2 2 20 20" />
+  </Base>
+);
+
 export const IconReceipt = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />

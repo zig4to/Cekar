@@ -54,7 +54,7 @@ export default function SingleItemStore({
         type="button"
         disabled={!item || pending || template}
         onClick={() => item && onToggle(item)}
-        className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 py-4 pl-3 text-left sm:py-2.5"
       >
         {!template && item && (
           <span
@@ -68,10 +68,10 @@ export default function SingleItemStore({
             {checked && <IconCheck className="h-3.5 w-3.5" strokeWidth={3} />}
           </span>
         )}
-        <StoreLogo name={store.name} />
+        <StoreLogo name={store.name} className="h-7 w-7 sm:h-5 sm:w-5" />
         <span
           className={clsx(
-            "min-w-0 break-words font-medium",
+            "min-w-0 break-words text-lg font-medium sm:text-base",
             checked && "text-gray-400 line-through dark:text-gray-500",
             !item && "text-gray-400 dark:text-gray-500"
           )}

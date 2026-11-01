@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getListDetail, getShoppingListNames } from "@/lib/data/cekar";
-import { collapsedCookie, parseCollapsed } from "@/lib/cekar/collapsed";
+import { NO_CATEGORIES_COOKIE, collapsedCookie, parseCollapsed } from "@/lib/cekar/collapsed";
 import ListView from "@/components/cekar/ListView";
 
 // Članstvo preveri layout (nečlan vidi Onboarding), RLS pa seznam drugega
@@ -23,7 +23,13 @@ export default async function ListPage({
   ]);
   if (!detail) notFound();
   const collapsed = parseCollapsed(jar.get(collapsedCookie(id))?.value);
+  const noCategories = parseCollapsed(jar.get(NO_CATEGORIES_COOKIE)?.value);
   return (
-    <ListView detail={detail} collapsedStoreIds={collapsed} shoppingLists={shoppingLists} />
+    <ListView
+      detail={detail}
+      collapsedStoreIds={collapsed}
+      noCategoryStoreIds={noCategories}
+      shoppingLists={shoppingLists}
+    />
   );
 }

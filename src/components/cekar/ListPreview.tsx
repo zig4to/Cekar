@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons";
-import { readCollapsed } from "@/lib/cekar/collapsed";
+import { readCollapsed, readNoCategories } from "@/lib/cekar/collapsed";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import {
@@ -26,6 +26,7 @@ export default function ListPreview() {
 
   if (!summary) return <ListSkeleton />;
   const collapsedIds = readCollapsed(summary.id);
+  const noCategoryIds = readNoCategories();
   const { products, categories } = cachedCatalog();
   const categoryOf = makeCategoryOf(products, categories);
 
@@ -71,7 +72,7 @@ export default function ListPreview() {
           return (
             <section
               key={storeId}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-4 sm:py-2.5 dark:border-gray-800 dark:bg-gray-900"
             >
               {!summary.isTemplate && item && (
                 <span
@@ -85,10 +86,10 @@ export default function ListPreview() {
                   {item.checked && <IconCheck className="h-3.5 w-3.5" strokeWidth={3} />}
                 </span>
               )}
-              <StoreLogo name={storeName} />
+              <StoreLogo name={storeName} className="h-7 w-7 sm:h-5 sm:w-5" />
               <span
                 className={clsx(
-                  "min-w-0 break-words font-medium",
+                  "min-w-0 break-words text-lg font-medium sm:text-base",
                   item?.checked && "text-gray-400 line-through dark:text-gray-500"
                 )}
               >
@@ -104,12 +105,15 @@ export default function ListPreview() {
           categoryOf,
           categories
         );
-        const showHeaders = groups.some((g) => g.id !== null);
+        const hideCategories = noCategoryIds.includes(storeId);
+        const showHeaders = !hideCategories && groups.some((g) => g.id !== null);
         const rows = [
-          ...groups.flatMap((g) => [
-            ...(showHeaders ? [{ header: g.name, item: null }] : []),
-            ...g.items.map((item) => ({ header: null, item })),
-          ]),
+          ...(hideCategories
+            ? items.filter((i) => !i.checked).map((item) => ({ header: null, item }))
+            : groups.flatMap((g) => [
+                ...(showHeaders ? [{ header: g.name, item: null }] : []),
+                ...g.items.map((item) => ({ header: null, item })),
+              ])),
           ...items.filter((i) => i.checked).map((item) => ({ header: null, item })),
         ];
         const collapsed = collapsedIds.includes(storeId);
@@ -120,7 +124,7 @@ export default function ListPreview() {
           >
             <header
               className={clsx(
-                "flex items-center gap-2 bg-emerald-50/60 py-2 pl-3 pr-12 dark:bg-emerald-950/20",
+                "flex items-center gap-2 bg-emerald-50/60 py-4 pl-3 pr-12 sm:py-2 dark:bg-emerald-950/20",
                 !collapsed && "border-b border-gray-100 dark:border-gray-800"
               )}
             >
@@ -130,8 +134,8 @@ export default function ListPreview() {
                   collapsed && "-rotate-90"
                 )}
               />
-              <StoreLogo name={cachedStoreName(storeId)} />
-              <h2 className="min-w-0 flex-1 truncate font-semibold">
+              <StoreLogo name={cachedStoreName(storeId)} className="h-7 w-7 sm:h-5 sm:w-5" />
+              <h2 className="min-w-0 flex-1 truncate text-lg font-semibold sm:text-base">
                 {cachedStoreName(storeId)}
               </h2>
               <span className="text-xs text-gray-500 dark:text-gray-400">

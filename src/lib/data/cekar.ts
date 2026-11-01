@@ -203,40 +203,55 @@ export async function getListDetail(
   };
 }
 
-// Nakupovalni seznami (brez stalnega) — cilji za "Zapiši na seznam".
 // Arhiv nakupov: opravljeni (arhivirani) seznami, najnovejši najprej, s
 // trgovinami, številom izdelkov in zapravljenim.
 export async function getArchivedLists(supabase: Supa): Promise<CekarArchivedList[]> {
   const { data: lists } = await supabase
     .from("cekar_lists")
-    .select("id, name, archived_at")
+    .select("id, household_id, name, archived_at")
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false });
   if (!lists?.length) return [];
   const ids = lists.map((l) => l.id);
-  const [{ data: listStores }, { data: items }, stores] = await Promise.all([
+  const [{ data: listStores }, { data: items }, { data: receipts }, stores] = await Promise.all([
     supabase
       .from("cekar_list_stores")
       .select("list_id, store_id, spent, position")
       .in("list_id", ids)
       .order("position"),
     supabase.from("cekar_items").select("list_id").in("list_id", ids),
+    supabase.from("cekar_receipts").select("*").in("list_id", ids).order("created_at"),
     getStores(supabase),
   ]);
-  const storeName = new Map(stores.map((s) => [s.id, s.name]));
+  const storeById = new Map(stores.map((s) => [s.id, s]));
   return lists.map((l) => {
     const own = (listStores ?? []).filter((ls) => ls.list_id === l.id);
+    const listStoresFull = own.flatMap((ls) => {
+      const store = storeById.get(ls.store_id);
+      if (!store) return [];
+      return [
+        {
+          store,
+          spent: ls.spent === null ? null : Number(ls.spent),
+          receipts: (receipts ?? []).filter(
+            (r) => r.list_id === l.id && r.store_id === ls.store_id
+          ),
+        },
+      ];
+    });
     return {
       id: l.id,
+      householdId: l.household_id,
       name: l.name,
       archivedAt: l.archived_at!,
-      storeNames: own.map((ls) => storeName.get(ls.store_id)).filter((n) => n !== undefined),
+      stores: listStoresFull,
       itemCount: (items ?? []).filter((i) => i.list_id === l.id).length,
-      spent: own.reduce((sum, ls) => sum + (ls.spent === null ? 0 : Number(ls.spent)), 0),
+      spent: listStoresFull.reduce((sum, s) => sum + (s.spent ?? 0), 0),
     };
   });
 }
 
+// Nakupovalni seznami (brez stalnega) — cilji za "Zapiši na seznam".
 export async function getShoppingListNames(supabase: Supa) {
   const { data } = await supabase
     .from("cekar_lists")

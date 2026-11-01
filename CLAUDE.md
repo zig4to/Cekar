@@ -168,6 +168,8 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - Zložene trgovine: piškotek `cekar-zlozeno-<listId>` (`src/lib/cekar/collapsed.ts`),
   ki ga `seznam/[id]/page.tsx` prebere na strežniku — ob osvežitvi brez
   utripa odpri → zapri. (Ne v localStorage, ta je dosegljiv šele po hidraciji.)
+- Oko v glavi trgovine (`StoreSection`) skrije skupine po kategorijah; piškotek
+  `cekar-brez-kategorij` (id-ji trgovin, velja na vseh seznamih) bere strežnik.
 
 ### PWA / middleware past
 

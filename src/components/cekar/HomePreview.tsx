@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
+import { IconBook, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import { itemsLabel } from "@/lib/cekar/text";
 import { ListSkeleton } from "@/components/cekar/ListPreview";
 import { cachedHouseholdName, cachedLists } from "@/lib/cekar/preview";
@@ -18,7 +18,7 @@ export default function HomePreview() {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
+      <div className="space-y-3">
         <h1 className="whitespace-nowrap text-xl font-semibold">Nakupovalni seznami</h1>
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate text-sm text-gray-500 dark:text-gray-400">
@@ -30,23 +30,23 @@ export default function HomePreview() {
           </span>
         </div>
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-2 pt-2">
         {lists.map((l, i) => (
           <li
             key={l.id}
             className={
               i === 0
-                ? "flex items-stretch overflow-hidden rounded-lg border border-emerald-400 bg-white ring-1 ring-emerald-400 dark:border-emerald-700 dark:bg-gray-900 dark:ring-emerald-700"
+                ? "relative flex items-stretch rounded-lg border border-emerald-400 bg-white ring-1 ring-emerald-400 dark:border-emerald-700 dark:bg-gray-900 dark:ring-emerald-700"
                 : "flex items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
             }
           >
+            {i === 0 && (
+              <span className="absolute -top-2.5 left-4 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-white shadow-sm">
+                Aktualno
+              </span>
+            )}
             <div className={`flex min-w-0 flex-1 items-center gap-3 ${i === 0 ? "px-4 py-6" : "p-4"}`}>
               <div className="min-w-0 flex-1">
-                {i === 0 && (
-                  <span className="mb-1.5 inline-block rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                    Aktualno
-                  </span>
-                )}
                 <p className={`break-words font-medium ${i === 0 ? "text-lg" : ""}`}>{l.name}</p>
                 <div className="mt-0.5 flex items-center gap-2">
                   <p className="min-w-0 flex-1 truncate text-sm text-gray-500 dark:text-gray-400">
@@ -62,25 +62,31 @@ export default function HomePreview() {
           </li>
         ))}
       </ul>
-      {template && <hr className="border-gray-300 dark:border-gray-700" />}
-      {template && (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <div className="flex items-center gap-3 px-4 pb-2 pt-4">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <IconRepeat className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="break-words font-medium">{template.name}</p>
-              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
-                {itemsLabel(template.total)}
-              </p>
+      {/* kot v ListsHome: na telefonu na dnu zaslona */}
+      <div className="space-y-4 max-sm:mt-auto">
+        {template && <hr className="border-gray-300 dark:border-gray-700" />}
+        {template && (
+          <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+            <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                <IconRepeat className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-medium">{template.name}</p>
+                <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  {itemsLabel(template.total)}
+                </p>
+              </div>
+            </div>
+            <div className="px-4 pb-4 pt-1">
+              <div className="h-9 rounded-md bg-emerald-600 opacity-80" />
             </div>
           </div>
-          <div className="px-4 pb-4 pt-1">
-            <div className="h-9 rounded-md bg-emerald-600 opacity-80" />
-          </div>
+        )}
+        <div className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+          <IconBook className="h-4 w-4" /> Arhiv nakupov
         </div>
-      )}
+      </div>
     </div>
   );
 }

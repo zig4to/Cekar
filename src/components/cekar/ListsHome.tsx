@@ -76,9 +76,11 @@ export default function ListsHome({
     .filter((s) => s !== undefined);
 
   return (
-    <div className="space-y-4">
+    // na telefonu vsaj višina zaslona (minus zgornja vrstica in odmik), da gre
+    // stalni seznam z arhivom na dno
+    <div className="flex flex-col space-y-4 max-sm:min-h-[calc(100dvh-5.5rem)]">
       {/* naslov ima celo vrstico zase (brez preloma), gumb je v vrstici pod njim */}
-      <div className="space-y-1">
+      <div className="space-y-3">
         <h1 className="whitespace-nowrap text-xl font-semibold">Nakupovalni seznami</h1>
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate text-sm text-gray-500 dark:text-gray-400">
@@ -101,20 +103,26 @@ export default function ListsHome({
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2 pt-2">
           {shoppingLists.map((l, i) => {
-            // najnovejši seznam (razvrščeni po created_at padajoče) = aktualni nakup
+            // najnovejši seznam (razvrščeni po created_at padajoče) = aktualni nakup;
+            // njegova kartica nima overflow-hidden, ker oznaka sedi na zgornjem robu
             const current = i === 0;
             return (
               <li
                 key={l.id}
                 className={clsx(
-                  "flex items-stretch overflow-hidden rounded-lg border bg-white hover:border-emerald-400 dark:bg-gray-900 dark:hover:border-emerald-700",
+                  "relative flex items-stretch rounded-lg border bg-white hover:border-emerald-400 dark:bg-gray-900 dark:hover:border-emerald-700",
                   current
                     ? "border-emerald-400 ring-1 ring-emerald-400 dark:border-emerald-700 dark:ring-emerald-700"
-                    : "border-gray-200 dark:border-gray-800"
+                    : "overflow-hidden border-gray-200 dark:border-gray-800"
                 )}
               >
+                {current && (
+                  <span className="absolute -top-2.5 left-4 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-white shadow-sm">
+                    Aktualno
+                  </span>
+                )}
                 <Link
                   href={`/seznam/${l.id}`}
                   className={clsx(
@@ -123,11 +131,6 @@ export default function ListsHome({
                   )}
                 >
                   <div className="min-w-0 flex-1">
-                    {current && (
-                      <span className="mb-1.5 inline-block rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                        Aktualno
-                      </span>
-                    )}
                     {/* naslov ima celo vrstico zase (po potrebi se prelomi), pod njim trgovine */}
                     <p className={clsx("break-words font-medium", current && "text-lg")}>{l.name}</p>
                     <div className="mt-0.5 flex items-center gap-2">
@@ -143,7 +146,7 @@ export default function ListsHome({
                   aria-label={`Hitro dodaj na ${l.name}`}
                   title="Hitro dodaj"
                   onClick={() => setQuickList(l)}
-                  className="flex w-14 flex-shrink-0 items-center justify-center border-l border-gray-100 text-emerald-700 hover:bg-emerald-50 dark:border-gray-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                  className="flex w-14 flex-shrink-0 items-center justify-center rounded-r-lg border-l border-gray-100 text-emerald-700 hover:bg-emerald-50 dark:border-gray-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
                 >
                   <IconPlus className="h-5 w-5" />
                 </button>
@@ -153,45 +156,48 @@ export default function ListsHome({
         </ul>
       )}
 
-      {template && <hr className="border-gray-300 dark:border-gray-700" />}
-      {template && (
-        <section className="overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <Link
-            href={`/seznam/${template.id}`}
-            className="flex items-center gap-3 px-4 pb-2 pt-4"
-          >
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <IconRepeat className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="break-words font-medium">{template.name}</p>
-              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
-                {template.total === 0
-                  ? "Dodaj izdelke, ki jih kupuješ vsak teden"
-                  : `${itemsLabel(template.total)} · ${template.storeNames.join(" · ")}`}
-              </p>
-            </div>
-            <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
-          </Link>
-          <div className="px-4 pb-4 pt-1">
-            <Button
-              onClick={() => setWriting(true)}
-              disabled={template.total === 0}
-              className="w-full"
+      {/* stalni seznam + arhiv: na telefonu prilepljena na dno zaslona (mt-auto) */}
+      <div className="space-y-4 max-sm:mt-auto">
+        {template && <hr className="border-gray-300 dark:border-gray-700" />}
+        {template && (
+          <section className="overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+            <Link
+              href={`/seznam/${template.id}`}
+              className="flex items-center gap-3 px-4 pb-2 pt-4"
             >
-              <IconPlus />
-              Zapiši na seznam
-            </Button>
-          </div>
-        </section>
-      )}
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                <IconRepeat className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-medium">{template.name}</p>
+                <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  {template.total === 0
+                    ? "Dodaj izdelke, ki jih kupuješ vsak teden"
+                    : `${itemsLabel(template.total)} · ${template.storeNames.join(" · ")}`}
+                </p>
+              </div>
+              <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+            </Link>
+            <div className="px-4 pb-4 pt-1">
+              <Button
+                onClick={() => setWriting(true)}
+                disabled={template.total === 0}
+                className="w-full"
+              >
+                <IconPlus />
+                Zapiši na seznam
+              </Button>
+            </div>
+          </section>
+        )}
 
-      <Link
-        href="/arhiv"
-        className="flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-      >
-        <IconBook className="h-4 w-4" /> Arhiv nakupov
-      </Link>
+        <Link
+          href="/arhiv"
+          className="flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+        >
+          <IconBook className="h-4 w-4" /> Arhiv nakupov
+        </Link>
+      </div>
 
       <QuickAddDialog
         title={quickList ? `Dodaj na „${quickList.name}“` : undefined}

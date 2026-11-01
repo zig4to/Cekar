@@ -69,10 +69,12 @@ function applyOp(items: CekarItem[], op: OptimisticOp): CekarItem[] {
 export default function ListView({
   detail,
   collapsedStoreIds,
+  noCategoryStoreIds,
   shoppingLists,
 }: {
   detail: CekarListDetail;
   collapsedStoreIds: string[];
+  noCategoryStoreIds: string[]; // trgovine s skritimi kategorijami (piškotek)
   shoppingLists: { id: string; name: string }[]; // cilji za "Zapiši na seznam"
 }) {
   const { list, stores, allStores, categories } = detail;
@@ -367,6 +369,7 @@ export default function ListView({
           onQuantity={onQuantity}
           onRemoveStore={() => onRemoveStore(store.id)}
           initialCollapsed={collapsedStoreIds.includes(store.id)}
+          initialHideCategories={noCategoryStoreIds.includes(store.id)}
           categories={categories}
           categoryOf={categoryOf}
           receiptProps={{
@@ -456,9 +459,9 @@ function FinishShopping({ listId }: { listId: string }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-600 hover:border-emerald-300 hover:text-emerald-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-emerald-800 dark:hover:text-emerald-400"
       >
-        <IconCheck className="h-5 w-5" /> Nakup opravljen
+        <IconCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Nakup opravljen
       </button>
     );
   }

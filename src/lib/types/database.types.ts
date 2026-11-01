@@ -160,8 +160,9 @@ export type CekarListSummary = {
 export type CekarArchivedList = {
   id: string;
   name: string;
+  householdId: string; // za pot računa v bucketu
   archivedAt: string;
-  storeNames: string[];
+  stores: { store: CekarStore; spent: number | null; receipts: CekarReceipt[] }[];
   itemCount: number;
   spent: number; // vsota vnesenih zneskov trgovin (EUR)
 };

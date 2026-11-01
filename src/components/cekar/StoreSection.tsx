@@ -6,6 +6,8 @@ import Menu, { MenuItem } from "@/components/ui/Menu";
 import {
   IconCheck,
   IconChevronDown,
+  IconEye,
+  IconEyeOff,
   IconList,
   IconMinus,
   IconPencil,
@@ -19,7 +21,7 @@ import SpentButton from "@/components/cekar/SpentButton";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
-import { setCollapsed } from "@/lib/cekar/collapsed";
+import { setCollapsed, setNoCategories } from "@/lib/cekar/collapsed";
 import { groupByCategory } from "@/lib/cekar/categories";
 import clsx from "@/lib/utils/clsx";
 import type {
@@ -49,6 +51,7 @@ export default function StoreSection({
   onQuantity,
   onRemoveStore,
   initialCollapsed,
+  initialHideCategories = false,
   categories,
   categoryOf,
   template = false,
@@ -66,6 +69,7 @@ export default function StoreSection({
   onQuantity: (item: CekarItem, quantity: number) => void;
   onRemoveStore: () => void;
   initialCollapsed: boolean; // iz piškotka, prebranega na strežniku
+  initialHideCategories?: boolean; // oko: brez skupin po kategorijah (piškotek)
   categories: CekarCategory[];
   categoryOf: (item: CekarItem) => string | null;
   template?: boolean; // stalni seznam: brez odkljukanja
@@ -82,9 +86,11 @@ export default function StoreSection({
   const openNames = open.map((i) => i.name);
 
   // Neodkljukani v skupinah po kategorijah (vrstni red kategorij = pot skozi
-  // trgovino), odkljukani na dnu brez skupin. Naslovov ni, če je vse "Ostalo".
+  // trgovino), odkljukani na dnu brez skupin. Naslovov ni, če je vse "Ostalo"
+  // ali če so kategorije skrite z očesom (potem vrstni red dodajanja).
+  const [hideCategories, setHideCategories] = useState(initialHideCategories);
   const groups = groupByCategory(open, categoryOf, categories);
-  const showHeaders = groups.some((g) => g.id !== null);
+  const showHeaders = !hideCategories && groups.some((g) => g.id !== null);
   type Row =
     | { type: "header"; id: string | null; name: string }
     | { type: "item"; item: CekarItem };
@@ -130,7 +136,7 @@ export default function StoreSection({
           type="button"
           onClick={toggleCollapsed}
           aria-expanded={!collapsed}
-          className="flex min-w-0 flex-1 items-center gap-2 py-2 pl-3 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2 py-4 pl-3 text-left sm:py-2"
         >
           <IconChevronDown
             className={clsx(
@@ -138,13 +144,27 @@ export default function StoreSection({
               collapsed && "-rotate-90"
             )}
           />
-          <StoreLogo name={store.name} />
-          <h2 className="min-w-0 flex-1 truncate font-semibold">{store.name}</h2>
+          <StoreLogo name={store.name} className="h-7 w-7 sm:h-5 sm:w-5" />
+          <h2 className="min-w-0 flex-1 truncate text-lg font-semibold sm:text-base">{store.name}</h2>
         </button>
         {/* znesek in račun ob nakupu — stalni seznam ju nima */}
         {!template && (
           <SpentButton listId={listId} storeId={store.id} storeName={store.name} spent={spent} />
         )}
+        <button
+          type="button"
+          aria-pressed={!hideCategories}
+          aria-label={hideCategories ? "Pokaži kategorije" : "Skrij kategorije"}
+          title={hideCategories ? "Pokaži kategorije" : "Skrij kategorije"}
+          onClick={() => {
+            const next = !hideCategories;
+            setHideCategories(next);
+            setNoCategories(store.id, next);
+          }}
+          className="rounded p-1.5 text-gray-500 hover:bg-white/70 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+        >
+          {hideCategories ? <IconEyeOff /> : <IconEye />}
+        </button>
         {!template && receiptProps && (
           <ReceiptButtons store={store} {...receiptProps} />
         )}

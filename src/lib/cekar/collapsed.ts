@@ -24,3 +24,23 @@ export function setCollapsed(listId: string, storeId: string, collapsed: boolean
     ? `${name}=${[...ids].join(".")}; path=/; max-age=31536000; samesite=lax`
     : `${name}=; path=/; max-age=0`;
 }
+
+// Trgovine s skritimi kategorijami (oko v glavi trgovine). Velja za trgovino
+// na vseh seznamih, zato en piškotek za vse; tudi tega bere strežnik.
+export const NO_CATEGORIES_COOKIE = "cekar-brez-kategorij";
+
+// Samo v brskalniku.
+export function readNoCategories(): string[] {
+  const name = `${NO_CATEGORIES_COOKIE}=`;
+  const hit = document.cookie.split("; ").find((c) => c.startsWith(name));
+  return parseCollapsed(hit?.slice(name.length));
+}
+
+export function setNoCategories(storeId: string, hidden: boolean) {
+  const ids = new Set(readNoCategories());
+  if (hidden) ids.add(storeId);
+  else ids.delete(storeId);
+  document.cookie = ids.size
+    ? `${NO_CATEGORIES_COOKIE}=${[...ids].join(".")}; path=/; max-age=31536000; samesite=lax`
+    : `${NO_CATEGORIES_COOKIE}=; path=/; max-age=0`;
+}
