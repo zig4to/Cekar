@@ -5,7 +5,7 @@ import { addStoreToListAction, createStoreAction } from "@/actions/cekar";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { IconStore } from "@/components/ui/icons";
+import StoreLogo from "@/components/cekar/StoreLogo";
 import type { CekarStore } from "@/lib/types/database.types";
 
 // Dodajanje trgovine na seznam: izbira med trgovinami gospodinjstva, ki še
@@ -50,7 +50,7 @@ export default function AddStoreDialog({
                 }
                 className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-3 text-left text-sm font-medium hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-50 dark:border-gray-700 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40"
               >
-                <IconStore className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <StoreLogo name={s.name} />
                 <span className="truncate">{s.name}</span>
               </button>
             ))}

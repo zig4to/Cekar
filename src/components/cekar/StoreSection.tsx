@@ -8,11 +8,11 @@ import {
   IconMinus,
   IconPencil,
   IconPlus,
-  IconStore,
   IconTrash,
   IconX,
 } from "@/components/ui/icons";
 import AddItemInput from "@/components/cekar/AddItemInput";
+import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
@@ -100,7 +100,7 @@ export default function StoreSection({
               collapsed && "-rotate-90"
             )}
           />
-          <IconStore className="h-4 w-4 flex-shrink-0 text-emerald-700 dark:text-emerald-400" />
+          <StoreLogo name={store.name} />
           <h2 className="min-w-0 flex-1 truncate font-semibold">{store.name}</h2>
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {checked.length}/{items.length}

@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/ui/Modal";
-import { IconPlus, IconStore } from "@/components/ui/icons";
+import { IconPlus } from "@/components/ui/icons";
 import { norm, parseQuantity } from "@/lib/cekar/text";
+import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityStepper from "@/components/cekar/QuantityStepper";
 import type { CekarItemBrief, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
@@ -138,7 +139,7 @@ export default function QuickAddDialog({
                     <IconPlus className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span className="min-w-0 flex-1 truncate">{p.name}</span>
                     <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                      <IconStore className="h-3 w-3" />
+                      <StoreLogo name={storeName.get(p.store_id) ?? ""} className="h-3.5 w-3.5" />
                       {storeName.get(p.store_id)}
                     </span>
                   </button>
@@ -162,7 +163,7 @@ export default function QuickAddDialog({
                   onClick={() => add(s.id, parsed.name)}
                   className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-sm text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/60"
                 >
-                  <IconStore className="h-3 w-3" />
+                  <StoreLogo name={s.name} className="h-3.5 w-3.5" />
                   {s.name}
                 </button>
               ))}

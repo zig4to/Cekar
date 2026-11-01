@@ -14,6 +14,7 @@ import { logoutAction } from "@/actions/auth";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import StoreLogo from "@/components/cekar/StoreLogo";
 import {
   IconArrowDown,
   IconArrowUp,
@@ -192,6 +193,7 @@ export default function Settings({
         <ul className="divide-y divide-gray-100 dark:divide-gray-800">
           {stores.map((s, i) => (
             <li key={s.id} className="flex items-center gap-1 py-1.5">
+              <StoreLogo name={s.name} className="mr-1.5 h-5 w-5" />
               <span className="min-w-0 flex-1 truncate text-sm">{s.name}</span>
               <button
                 type="button"

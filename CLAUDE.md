@@ -67,6 +67,9 @@ Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 `parseQuantity` v `src/lib/cekar/text.ts`); urejanje v `ItemEditDialog`
 (svinčnik), prikaz `2×` (`QuantityBadge`) samo pri količini nad 1.
 
+Logotipi trgovin: `public/logos/*` (favicon-i trgovin), `StoreLogo` jih
+prepozna po imenu (regex v `LOGOS`); neznana trgovina dobi prvo črko.
+
 ## Arhitektura
 
 Enako kot Vzlet: server `src/app/(app)/*/page.tsx` → branje prek

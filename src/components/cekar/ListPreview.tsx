@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { IconArrowLeft, IconCheck, IconChevronDown, IconStore } from "@/components/ui/icons";
+import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { collapsedKey } from "@/components/cekar/StoreSection";
+import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { cachedList, cachedStoreName } from "@/lib/cekar/preview";
 import clsx from "@/lib/utils/clsx";
@@ -78,7 +79,7 @@ export default function ListPreview() {
                   collapsed && "-rotate-90"
                 )}
               />
-              <IconStore className="h-4 w-4 flex-shrink-0 text-emerald-700 dark:text-emerald-400" />
+              <StoreLogo name={cachedStoreName(storeId)} />
               <h2 className="min-w-0 flex-1 truncate font-semibold">
                 {cachedStoreName(storeId)}
               </h2>
