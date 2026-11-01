@@ -29,6 +29,7 @@ export type CekarStore = {
   name: string;
   position: number;
   default_items: string[]; // dodajo se sami, ko trgovino dodaš na seznam
+  single_item: boolean; // trgovina z enim izdelkom: na seznamu ena vrstica
   created_at: string;
 };
 

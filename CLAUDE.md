@@ -65,6 +65,11 @@ Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
 (Mlekarica → Domače mleko). Urejanje zaenkrat samo v bazi.
 
+`0008_single_item_stores.sql`: `cekar_stores.single_item` — trgovina z enim
+izdelkom (Mlekarica → Domače mleko, Domača Jajca → Domača jajca) je na seznamu
+ena vrstica (`SingleItemStore`: logo, ime izdelka, kljukica, − / +) namesto
+sekcije. Izdelek = `default_items[1]`. Nastavlja se zaenkrat samo v bazi.
+
 `0007_template_list.sql`: `cekar_lists.is_template` — **stalni seznam** (en na
 gospodinjstvo, partial unique index), pripet na vrh `ListsHome`. Ureja se kot
 navaden seznam (`ListView`/`StoreSection` s `template` = brez odkljukanja, brez

@@ -6,7 +6,12 @@ import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons
 import { readCollapsed } from "@/lib/cekar/collapsed";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
-import { cachedCatalog, cachedList, cachedStoreName } from "@/lib/cekar/preview";
+import {
+  cachedCatalog,
+  cachedList,
+  cachedStoreName,
+  isCachedSingleStore,
+} from "@/lib/cekar/preview";
 import { groupByCategory, makeCategoryOf } from "@/lib/cekar/categories";
 import { itemsLabel } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
@@ -59,6 +64,40 @@ export default function ListPreview() {
 
       {summary.storeIds.map((storeId) => {
         const items = summary.items.filter((i) => i.store_id === storeId);
+        if (isCachedSingleStore(storeId)) {
+          // enako kot SingleItemStore: ena vrstica z izdelkom
+          const item = items.find((i) => !i.checked) ?? items[0];
+          const storeName = cachedStoreName(storeId);
+          return (
+            <section
+              key={storeId}
+              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900"
+            >
+              {!summary.isTemplate && item && (
+                <span
+                  className={clsx(
+                    "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2",
+                    item.checked
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : "border-gray-300 dark:border-gray-600"
+                  )}
+                >
+                  {item.checked && <IconCheck className="h-3.5 w-3.5" strokeWidth={3} />}
+                </span>
+              )}
+              <StoreLogo name={storeName} />
+              <span
+                className={clsx(
+                  "min-w-0 break-words font-medium",
+                  item?.checked && "text-gray-400 line-through dark:text-gray-500"
+                )}
+              >
+                {item?.name ?? storeName}
+              </span>
+              {item && <QuantityBadge quantity={item.quantity} checked={item.checked} />}
+            </section>
+          );
+        }
         // enako kot StoreSection: neodkljukani po kategorijah, odkljukani na dnu
         const groups = groupByCategory(
           items.filter((i) => !i.checked),

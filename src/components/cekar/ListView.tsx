@@ -21,6 +21,7 @@ import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
+import SingleItemStore from "@/components/cekar/SingleItemStore";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
@@ -191,6 +192,11 @@ export default function ListView({
     });
   };
 
+  const onQuantity = (item: CekarItem, quantity: number) =>
+    run({ type: "edit", id: item.id, name: item.name, quantity }, () =>
+      updateItemAction(item.id, item.name, quantity)
+    );
+
   const onDelete = (item: CekarItem) =>
     run({ type: "delete", id: item.id }, () => deleteItemAction(item.id));
 
@@ -299,29 +305,42 @@ export default function ListView({
         </p>
       )}
 
-      {stores.map((store) => (
+      {stores.map((store) => {
+        const own = items.filter((i) => i.store_id === store.id);
+        if (store.single_item) {
+          return (
+            <SingleItemStore
+              key={store.id}
+              store={store}
+              item={own.find((i) => !i.checked) ?? own[0]}
+              template={isTemplate}
+              onToggle={onToggle}
+              onQuantity={onQuantity}
+              onAdd={(name) => onAdd(store.id, name)}
+              onRemoveStore={() => onRemoveStore(store.id)}
+            />
+          );
+        }
+        return (
         <StoreSection
           key={store.id}
           listId={list.id}
           store={store}
-          items={items.filter((i) => i.store_id === store.id)}
+          items={own}
           products={products.filter((p) => p.store_id === store.id)}
           onToggle={onToggle}
           onAdd={(name, quantity) => onAdd(store.id, name, quantity)}
           onDelete={onDelete}
           onEdit={setEditingItem}
-          onQuantity={(item, quantity) =>
-            run({ type: "edit", id: item.id, name: item.name, quantity }, () =>
-              updateItemAction(item.id, item.name, quantity)
-            )
-          }
+          onQuantity={onQuantity}
           onRemoveStore={() => onRemoveStore(store.id)}
           initialCollapsed={collapsedStoreIds.includes(store.id)}
           categories={categories}
           categoryOf={categoryOf}
           template={isTemplate}
         />
-      ))}
+        );
+      })}
 
       <button
         type="button"
