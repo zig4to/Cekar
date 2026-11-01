@@ -8,7 +8,7 @@
    - vse ostalo (strani, RSC, ikone) — mreža najprej, predpomnilnik le kot rezerva.
    Ob spremembi te datoteke povečaj VERZIJA. */
 
-const VERZIJA = "v4";
+const VERZIJA = "v5";
 const CACHE = "cekar-" + VERZIJA;
 
 self.addEventListener("install", () => {
