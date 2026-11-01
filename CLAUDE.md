@@ -42,6 +42,12 @@ Ni Supabase CLI toka: vsako `supabase/migrations/000N_*.sql` prilepi v
 pomeni, da je izvedena. `src/lib/types/database.types.ts` je **ročno
 napisan** — ob novi migraciji ga posodobi.
 
+Supabase MCP ni na voljo; migracijo lahko poženeš prek Claude in Chrome v SQL
+Editorju projekta **ProjektiBaze** (`abjnxhfxjolwwxlckkje`, URL
+`supabase.com/dashboard/project/abjnxhfxjolwwxlckkje/sql/new`). Vpiši SQL kot
+eno vrstico (Monaco samodejno zapira oklepaje) in raje `if not exists` /
+`on conflict do nothing`. Izvedene so vse do vključno `0013`.
+
 Tabele (`0001_init.sql`):
 - `cekar_households` (`invite_code`), `cekar_members` (PK `user_id` → en
   uporabnik = največ eno gospodinjstvo).
@@ -116,9 +122,14 @@ privzeti nabor prek `cekar_seed_categories` (samo interno, brez EXECUTE).
 `parseQuantity` v `src/lib/cekar/text.ts`); urejanje v `ItemEditDialog`
 (svinčnik), prikaz `2×` (`QuantityBadge`) samo pri količini nad 1.
 
-Logotipi trgovin: `public/logos/*` (favicon-i trgovin), `StoreLogo` jih
-prepozna po imenu (regex v `LOGOS`); neznana trgovina dobi prvo črko. `0013_domace_meso.sql`
-doda navadno trgovino „Domače meso“ (logo `domace-meso.svg`).
+Logotipi trgovin: `public/logos/*`, `StoreLogo` jih prepozna po imenu (regex v
+`LOGOS`, nad `norm()` imenom); neznana trgovina dobi prvo črko. Prikazani so
+kvadratni (20 px, na telefonu v glavi trgovine 28 px) — logotip naj zapolni
+kvadrat brez belega roba (`lidl.svg` je imel bel okvir, odstranjen; `hofer.png`
+je ikona z Brandfetcha, obrezana na 128 px). Mlekarica, Domača jajca in Domače
+meso imajo lastne SVG v enakem slogu (modro nebo, zelen travnik). Nov logotip
+pred commitom izriši (headless Chrome `--screenshot`) v 96 in 20 px ob ostalih.
+`0013_domace_meso.sql` doda navadno trgovino „Domače meso“.
 
 ## Arhitektura
 
@@ -127,25 +138,40 @@ Enako kot Vzlet: server `src/app/(app)/*/page.tsx` → branje prek
 Mutacije: `"use server"` akcije v `src/actions/cekar.ts` (helper `ctx()` vrne
 klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 
-- `(app)/layout.tsx` — zgornja vrstica; uporabnik brez članstva vidi
-  `Onboarding` namesto vsebine strani.
-- `/` `ListsHome` · `/seznam/[id]` `ListView` → `StoreSection` →
-  `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
-  brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
-  (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
+- `(app)/layout.tsx` — zgornja vrstica: logo → `/`, „Vsi izdelki“
+  (`/izdelki`), Statistika (na telefonu samo ikona), nastavitve. Uporabnik brez
+  članstva vidi `Onboarding` namesto vsebine strani. Podstrani (statistika,
+  izdelki, arhiv, katalog trgovine) imajo levo od naslova puščico nazaj.
+- `/` `ListsHome`: najnovejši seznam (`created_at` padajoče, prvi) je večja
+  kartica z oznako „Aktualno“ na zgornjem robu (kartica brez `overflow-hidden`);
+  kartice nimajo števca izdelkov. Na telefonu sta stalni seznam in povezava
+  „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
+  skupina `max-sm:mt-auto`).
+- `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (predlogi: katalog
+  te trgovine, brez šumnikov/velikih črk, brez izdelkov, ki so že neodkljukani).
+  Glava trgovine: logo, ime, € (`SpentButton`), oko (kategorije), kamera/računi,
+  števec, meni ⋯ (Uredi izdelke trgovine, Odstrani s seznama — potrditev v
+  meniju, ne `window.confirm`). Na telefonu je glava višja, logo in ime večja.
 - Arhiv: „Nakup opravljen“ pod „Dodaj trgovino“ (`FinishShopping` v `ListView`,
   potrditev na mestu) → `archiveListAction` nastavi `cekar_lists.archived_at`
-  (stolpec iz 0001). `/arhiv` `ArchiveList` (povezava na dnu `ListsHome`);
-  arhiviran seznam ima pas „Vrni med sezname“. Najnovejši seznam na domači
-  strani je večja kartica z oznako „Aktualno“.
-- `/izdelki` `ProductsCatalog` (gumb v zgornji vrstici) — skupni seznam izdelkov:
-  vrstice `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri
-  njem = vrstice. Dodaš trgovino → nova vrstica (`use_count` 0), zato se izdelek
+  (stolpec iz 0001). `/arhiv` `ArchiveList` (`getArchivedLists`): kartica z
+  datumom in vsoto, pod njo trgovine nakupa z `SpentButton` in `ReceiptButtons`
+  (znesek in račun se dodajata tudi po nakupu). Arhiviran seznam ima pas
+  „Vrni med sezname“, nazaj vodi na `/arhiv` in ne gre v predpomnilnik domače strani.
+- `/izdelki` `ProductsCatalog` — skupni seznam izdelkov: vrstice
+  `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri njem =
+  vrstice. Dodaš trgovino → nova vrstica (`use_count` 0), zato se izdelek
   takoj pokaže med predlogi te trgovine. Zadnje trgovine ni mogoče odznačiti.
+  Gumb Filter: trgovina in kategorija (zložljiva skupina); na seznamu so samo
+  logotipi trgovin, kategorija se ureja ob razširitvi.
 - `/nastavitve/trgovina/[id]` `StoreProducts` — urejanje kataloga trgovine
   (`cekar_products`: dodaj, preimenuj, kategorija, izbriši); vrstic na
   seznamih ne spreminja. Odpre se iz Nastavitev (ime trgovine) ali iz menija
   ⋯ trgovine na seznamu (`?nazaj=/seznam/<id>` za gumb nazaj).
+- Imena v katalogu se urejajo s klikom (`InlineName`: Enter/klik drugam shrani,
+  Esc prekliče) — brez svinčnika in okna.
+- `/nastavitve` `Settings` (koda za povabilo, člani, trgovine z vrstnim
+  redom, kategorije, tema, odjava).
 - Plavajoči gumb „Hitro dodaj“ v `ListView` in gumb + na vsaki kartici v
   `ListsHome` odpreta `QuickAddDialog`: predlogi
   iz kataloga **vseh** trgovin z oznako trgovine (npr. „Malinovec · Lidl“),
@@ -164,6 +190,9 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - `loading.tsx` (`(app)/` in `seznam/[id]/`) takoj nariše `HomePreview` /
   `ListPreview` iz predpomnilnika `src/lib/cekar/preview.ts`, ki ga polnita
   `ListsHome` in `ListView` (useEffect). Brez predpomnilnika → okostje.
+  **`HomePreview`/`ListPreview` posnemata postavitev `ListsHome`/`StoreSection`**
+  (kartica Aktualno, stalni seznam na dnu, višine glav, skrite kategorije) — ob
+  spremembi videza popravi oba, sicer stran ob nalaganju skoči.
 - `vercel.json` `regions: ["dub1"]` — Supabase je v eu-west-1 (Irska).
 - Zložene trgovine: piškotek `cekar-zlozeno-<listId>` (`src/lib/cekar/collapsed.ts`),
   ki ga `seznam/[id]/page.tsx` prebere na strežniku — ob osvežitvi brez
