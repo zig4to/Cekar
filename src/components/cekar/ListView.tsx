@@ -14,6 +14,7 @@ import {
   toggleItemAction,
 } from "@/actions/cekar";
 import { createClient } from "@/lib/supabase/client";
+import { rememberList } from "@/lib/cekar/preview";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
@@ -80,6 +81,22 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
       supabase.removeChannel(channel);
     };
   }, [list.id, router]);
+
+  // Povzetek za takojšnji pogled ob naslednjem odprtju (loading.tsx).
+  useEffect(() => {
+    rememberList(
+      {
+        id: list.id,
+        name: list.name,
+        storeNames: stores.map((s) => s.name),
+        storeIds: stores.map((s) => s.id),
+        items: detail.items.map(({ store_id, name, checked }) => ({ store_id, name, checked })),
+        total: detail.items.length,
+        checked: detail.items.filter((i) => i.checked).length,
+      },
+      allStores
+    );
+  }, [list.id, list.name, stores, allStores, detail.items]);
 
   const run = (op: OptimisticOp, action: () => Promise<{ error?: string }>) => {
     setError(null);

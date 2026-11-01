@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
+import { rememberLists } from "@/lib/cekar/preview";
 import { IconBasket, IconChevronRight, IconPlus } from "@/components/ui/icons";
 import type {
   CekarListSummary,
@@ -30,6 +31,11 @@ export default function ListsHome({
   const [quickList, setQuickList] = useState<CekarListSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // Za takojšnji pogled ob odprtju seznama / vrnitvi sem (loading.tsx).
+  useEffect(() => {
+    rememberLists(lists, stores, householdName);
+  }, [lists, stores, householdName]);
 
   const quickAdd = (storeId: string, name: string) => {
     const list = quickList;

@@ -8,8 +8,9 @@ import type {
 } from "@/lib/types/database.types";
 
 // Samo branje. RLS omeji vse poizvedbe na gospodinjstvo prijavljenega
-// uporabnika (cekar_my_household()), zato eksplicitni filtri po
-// household_id niso nujni — dodani so tam, kjer pomagajo indeksu.
+// uporabnika (cekar_my_household()), zato poizvedbe po trgovinah, seznamih
+// in izdelkih ne potrebujejo household_id in jih strani poženejo vzporedno
+// z getMembership — en krog do baze namesto verige zaporednih.
 type Supa = SupabaseClient<Database>;
 
 export async function getMembership(
@@ -45,52 +46,46 @@ export async function getMembers(
   return data ?? [];
 }
 
-export async function getStores(supabase: Supa, householdId: string) {
+export async function getStores(supabase: Supa) {
   const { data } = await supabase
     .from("cekar_stores")
     .select("*")
-    .eq("household_id", householdId)
     .order("position")
     .order("created_at");
   return data ?? [];
 }
 
 // Katalog izdelkov gospodinjstva (vse trgovine), najpogostejši najprej.
-export async function getProducts(supabase: Supa, householdId: string) {
+export async function getProducts(supabase: Supa) {
   const { data } = await supabase
     .from("cekar_products")
     .select("*")
-    .eq("household_id", householdId)
     .order("use_count", { ascending: false })
     .order("last_used_at", { ascending: false });
   return data ?? [];
 }
 
-export async function getListSummaries(
-  supabase: Supa,
-  householdId: string
-): Promise<CekarListSummary[]> {
-  const { data: lists } = await supabase
-    .from("cekar_lists")
-    .select("*")
-    .eq("household_id", householdId)
-    .is("archived_at", null)
-    .order("created_at", { ascending: false });
+export async function getListSummaries(supabase: Supa): Promise<CekarListSummary[]> {
+  const [{ data: lists }, { data: listStores }, { data: items }, stores] =
+    await Promise.all([
+      supabase
+        .from("cekar_lists")
+        .select("*")
+        .is("archived_at", null)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("cekar_list_stores")
+        .select("list_id, store_id, position")
+        .order("position"),
+      // vrstni red kot v ListView — loading.tsx iz tega riše takojšnji pogled
+      supabase
+        .from("cekar_items")
+        .select("list_id, store_id, name, checked")
+        .order("position")
+        .order("created_at"),
+      getStores(supabase),
+    ]);
   if (!lists?.length) return [];
-
-  const ids = lists.map((l) => l.id);
-  const [{ data: listStores }, { data: items }, stores] = await Promise.all([
-    supabase
-      .from("cekar_list_stores")
-      .select("list_id, store_id, position")
-      .in("list_id", ids)
-      .order("position"),
-    supabase
-      .from("cekar_items")
-      .select("list_id, store_id, name, checked")
-      .in("list_id", ids),
-    getStores(supabase, householdId),
-  ]);
   const storeName = new Map(stores.map((s) => [s.id, s.name]));
 
   return lists.map((l) => {
@@ -112,18 +107,11 @@ export async function getListSummaries(
 
 export async function getListDetail(
   supabase: Supa,
-  householdId: string,
   listId: string
 ): Promise<CekarListDetail | null> {
-  const { data: list } = await supabase
-    .from("cekar_lists")
-    .select("*")
-    .eq("id", listId)
-    .maybeSingle();
-  if (!list) return null;
-
-  const [{ data: listStores }, { data: items }, allStores, products] =
+  const [{ data: list }, { data: listStores }, { data: items }, allStores, products] =
     await Promise.all([
+      supabase.from("cekar_lists").select("*").eq("id", listId).maybeSingle(),
       supabase
         .from("cekar_list_stores")
         .select("*")
@@ -136,9 +124,10 @@ export async function getListDetail(
         .eq("list_id", listId)
         .order("position")
         .order("created_at"),
-      getStores(supabase, householdId),
-      getProducts(supabase, householdId),
+      getStores(supabase),
+      getProducts(supabase),
     ]);
+  if (!list) return null;
 
   const byId = new Map(allStores.map((s) => [s.id, s]));
   const stores = (listStores ?? [])

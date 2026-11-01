@@ -11,15 +11,15 @@ import ListsHome from "@/components/cekar/ListsHome";
 export default async function HomePage() {
   const supabase = await createClient();
   const user = await getAuthUser(supabase);
-  const membership = user ? await getMembership(supabase, user.id) : null;
-  if (!membership) return null; // layout pokaže Onboarding
+  if (!user) return null;
 
-  const householdId = membership.household.id;
-  const [lists, stores, products] = await Promise.all([
-    getListSummaries(supabase, householdId),
-    getStores(supabase, householdId),
-    getProducts(supabase, householdId),
+  const [membership, lists, stores, products] = await Promise.all([
+    getMembership(supabase, user.id),
+    getListSummaries(supabase),
+    getStores(supabase),
+    getProducts(supabase),
   ]);
+  if (!membership) return null; // layout pokaže Onboarding
   return (
     <ListsHome
       lists={lists}

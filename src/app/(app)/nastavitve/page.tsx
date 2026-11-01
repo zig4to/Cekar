@@ -11,7 +11,7 @@ export default async function SettingsPage() {
 
   const [members, stores] = await Promise.all([
     getMembers(supabase, membership.household.id),
-    getStores(supabase, membership.household.id),
+    getStores(supabase),
   ]);
   return (
     <Settings

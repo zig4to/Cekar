@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getAuthUser } from "@/lib/supabase/auth";
-import { getListDetail, getMembership } from "@/lib/data/cekar";
+import { getListDetail } from "@/lib/data/cekar";
 import ListView from "@/components/cekar/ListView";
 
+// Članstvo preveri layout (nečlan vidi Onboarding), RLS pa seznam drugega
+// gospodinjstva skrije — zato tu samo en krog poizvedb.
 export default async function ListPage({
   params,
 }: {
@@ -11,11 +12,7 @@ export default async function ListPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getAuthUser(supabase);
-  const membership = user ? await getMembership(supabase, user.id) : null;
-  if (!membership) return null;
-
-  const detail = await getListDetail(supabase, membership.household.id, id);
+  const detail = await getListDetail(supabase, id);
   if (!detail) notFound();
   return <ListView detail={detail} />;
 }

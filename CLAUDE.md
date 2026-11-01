@@ -83,6 +83,17 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   začasni id `temp-N`, na katerem so akcije onemogočene) in Supabase realtime
   kanal, ki ob spremembi drugega člana pokliče `router.refresh()`.
 
+### Hitrost odpiranja
+
+- Branje v `cekar.ts` se zanaša na RLS (brez `household_id` filtra), zato
+  strani vse poizvedbe poženejo v **enem vzporednem krogu** (`Promise.all`),
+  ne v verigi članstvo → gospodinjstvo → podatki. `seznam/[id]` članstva ne
+  preverja (to naredi layout).
+- `loading.tsx` (`(app)/` in `seznam/[id]/`) takoj nariše `HomePreview` /
+  `ListPreview` iz predpomnilnika `src/lib/cekar/preview.ts`, ki ga polnita
+  `ListsHome` in `ListView` (useEffect). Brez predpomnilnika → okostje.
+- `vercel.json` `regions: ["dub1"]` — Supabase je v eu-west-1 (Irska).
+
 ### PWA / middleware past
 
 `src/proxy.ts` matcher **mora** izključevati statične `.js` (`sw.js`,

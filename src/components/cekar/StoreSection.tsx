@@ -18,7 +18,7 @@ import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.t
 const isTemp = (item: CekarItem) => item.id.startsWith("temp-");
 
 // Zloženost sekcije si zapomni brskalnik (na seznam in trgovino posebej).
-const collapsedKey = (listId: string, storeId: string) =>
+export const collapsedKey = (listId: string, storeId: string) =>
   `cekar-collapsed:${listId}:${storeId}`;
 
 // Ena trgovina na seznamu: glava, checklista (neodkljukani po vrstnem redu
