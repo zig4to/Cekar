@@ -3,19 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons";
-import { collapsedKey } from "@/components/cekar/StoreSection";
+import { readCollapsed } from "@/lib/cekar/collapsed";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { cachedList, cachedStoreName } from "@/lib/cekar/preview";
 import clsx from "@/lib/utils/clsx";
-
-function isCollapsed(listId: string, storeId: string) {
-  try {
-    return localStorage.getItem(collapsedKey(listId, storeId)) === "1";
-  } catch {
-    return false;
-  }
-}
 
 // Takojšnji pogled seznama med nalaganjem (loading.tsx): iz povzetka, ki ga
 // je domača stran že imela, nariše glavo, trgovine in izdelke v enaki
@@ -26,6 +18,7 @@ export default function ListPreview() {
   const summary = cachedList(id);
 
   if (!summary) return <ListSkeleton />;
+  const collapsedIds = readCollapsed(summary.id);
 
   return (
     <div className="space-y-4 pb-24">
@@ -61,7 +54,7 @@ export default function ListPreview() {
       {summary.storeIds.map((storeId) => {
         const items = summary.items.filter((i) => i.store_id === storeId);
         const sorted = [...items.filter((i) => !i.checked), ...items.filter((i) => i.checked)];
-        const collapsed = isCollapsed(summary.id, storeId);
+        const collapsed = collapsedIds.includes(storeId);
         return (
           <section
             key={storeId}

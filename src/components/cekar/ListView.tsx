@@ -53,7 +53,13 @@ function applyOp(items: CekarItem[], op: OptimisticOp): CekarItem[] {
 // pod vsako checklista izdelkov in vnos s predlogi iz kataloga te trgovine.
 // Spremembe se prikažejo takoj (useOptimistic), strežnik jih potrdi prek
 // revalidatePath; spremembe drugih članov pridejo prek Supabase realtime.
-export default function ListView({ detail }: { detail: CekarListDetail }) {
+export default function ListView({
+  detail,
+  collapsedStoreIds,
+}: {
+  detail: CekarListDetail;
+  collapsedStoreIds: string[];
+}) {
   const { list, stores, allStores, products } = detail;
   const router = useRouter();
   const [items, applyOptimistic] = useOptimistic(detail.items, applyOp);
@@ -248,6 +254,7 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
             )
           }
           onRemoveStore={() => onRemoveStore(store.id)}
+          initialCollapsed={collapsedStoreIds.includes(store.id)}
         />
       ))}
 

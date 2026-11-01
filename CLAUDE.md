@@ -106,6 +106,9 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   `ListPreview` iz predpomnilnika `src/lib/cekar/preview.ts`, ki ga polnita
   `ListsHome` in `ListView` (useEffect). Brez predpomnilnika → okostje.
 - `vercel.json` `regions: ["dub1"]` — Supabase je v eu-west-1 (Irska).
+- Zložene trgovine: piškotek `cekar-zlozeno-<listId>` (`src/lib/cekar/collapsed.ts`),
+  ki ga `seznam/[id]/page.tsx` prebere na strežniku — ob osvežitvi brez
+  utripa odpri → zapri. (Ne v localStorage, ta je dosegljiv šele po hidraciji.)
 
 ### PWA / middleware past
 

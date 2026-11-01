@@ -15,15 +15,15 @@ import AddItemInput from "@/components/cekar/AddItemInput";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
+import { setCollapsed } from "@/lib/cekar/collapsed";
 import clsx from "@/lib/utils/clsx";
 import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
 // Izdelek, ki še čaka na potrditev strežnika (optimistično dodan).
 const isTemp = (item: CekarItem) => item.id.startsWith("temp-");
 
-// Zloženost sekcije si zapomni brskalnik (na seznam in trgovino posebej).
-export const collapsedKey = (listId: string, storeId: string) =>
-  `cekar-collapsed:${listId}:${storeId}`;
+// Starejša različica je zloženost hranila v localStorage — enkrat prenesemo v piškotek.
+const legacyKey = (listId: string, storeId: string) => `cekar-collapsed:${listId}:${storeId}`;
 
 // Ena trgovina na seznamu: glava, checklista (neodkljukani po vrstnem redu
 // dodajanja, odkljukani na dnu) in vnos novega izdelka s predlogi.
@@ -38,6 +38,7 @@ export default function StoreSection({
   onEdit,
   onQuantity,
   onRemoveStore,
+  initialCollapsed,
 }: {
   listId: string;
   store: CekarStore;
@@ -49,6 +50,7 @@ export default function StoreSection({
   onEdit: (item: CekarItem) => void;
   onQuantity: (item: CekarItem, quantity: number) => void;
   onRemoveStore: () => void;
+  initialCollapsed: boolean; // iz piškotka, prebranega na strežniku
 }) {
   const open = items
     .filter((i) => !i.checked)
@@ -58,26 +60,24 @@ export default function StoreSection({
     .sort((a, b) => (a.checked_at ?? "").localeCompare(b.checked_at ?? ""));
   const openNames = open.map((i) => i.name);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsedState] = useState(initialCollapsed);
   useEffect(() => {
     try {
-      // localStorage je na voljo šele v brskalniku (po hidraciji)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCollapsed(localStorage.getItem(collapsedKey(listId, store.id)) === "1");
+      if (localStorage.getItem(legacyKey(listId, store.id)) === "1") {
+        localStorage.removeItem(legacyKey(listId, store.id));
+        setCollapsed(listId, store.id, true);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCollapsedState(true);
+      }
     } catch {
-      /* zasebni način — sekcija ostane razprta */
+      /* zasebni način */
     }
   }, [listId, store.id]);
 
   const toggleCollapsed = () => {
     const next = !collapsed;
-    setCollapsed(next);
-    try {
-      if (next) localStorage.setItem(collapsedKey(listId, store.id), "1");
-      else localStorage.removeItem(collapsedKey(listId, store.id));
-    } catch {
-      /* ni pomembno */
-    }
+    setCollapsedState(next);
+    setCollapsed(listId, store.id, next);
   };
 
   return (
