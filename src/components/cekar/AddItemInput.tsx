@@ -8,7 +8,7 @@ import type { CekarProduct } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 12;
 
-// Vnos izdelka za eno trgovino. Med pisanjem (ali ob fokusu) se pod poljem
+// Vnos izdelka za eno trgovino. Šele med pisanjem se pod poljem
 // pokažejo predlogi iz kataloga SAMO te trgovine — izdelki, ki so bili tu
 // že kdaj dodani, najpogostejši najprej. Izdelki, ki so že neodkljukani na
 // seznamu, se ne predlagajo. Količino nastaviš s števcem ob polju ali jo
@@ -26,7 +26,6 @@ export default function AddItemInput({
 }) {
   const [value, setValue] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // predlogi iščejo po imenu brez vpisane količine ("2 mle" najde "Mleko")
@@ -52,7 +51,8 @@ export default function AddItemInput({
     inputRef.current?.focus();
   };
 
-  const showSuggestions = (focused || q) && suggestions.length > 0;
+  // predlogi samo med pisanjem (prazno polje = brez predlogov)
+  const showSuggestions = q !== "" && suggestions.length > 0;
 
   return (
     <div className="border-t border-gray-100 p-2 dark:border-gray-800">
@@ -67,8 +67,6 @@ export default function AddItemInput({
           ref={inputRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           placeholder={`Dodaj v ${storeName} …`}
           enterKeyHint="done"
           className="min-w-0 flex-1 rounded-md border border-transparent bg-gray-50 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:bg-gray-800 dark:placeholder:text-gray-500"
