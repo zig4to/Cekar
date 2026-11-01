@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import {
   addProductStoreAction,
@@ -14,7 +14,13 @@ import Modal from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import InlineName from "@/components/cekar/InlineName";
 import StoreLogo from "@/components/cekar/StoreLogo";
-import { IconArrowLeft, IconChevronDown, IconPlus, IconTrash } from "@/components/ui/icons";
+import {
+  IconArrowLeft,
+  IconChevronDown,
+  IconFilter,
+  IconPlus,
+  IconTrash,
+} from "@/components/ui/icons";
 import { norm } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
 import type { CekarCategory, CekarProduct, CekarStore } from "@/lib/types/database.types";
@@ -45,6 +51,10 @@ function groupProducts(products: CekarProduct[]): CatalogProduct[] {
   return [...map.values()].sort((a, b) => norm(a.name).localeCompare(norm(b.name), "sl"));
 }
 
+// posebni vrednosti filtra / izbire kategorije (niso uuid)
+const NO_CATEGORY = "brez";
+const AUTO = "auto";
+
 const CHIP =
   "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors";
 const CHIP_ON =
@@ -64,6 +74,9 @@ export default function ProductsCatalog({
   const catalog = useMemo(() => groupProducts(products), [products]);
   const [query, setQuery] = useState("");
   const [storeFilter, setStoreFilter] = useState<string | null>(null);
+  // null = vse kategorije, NO_CATEGORY = izdelki brez kategorije ("Ostalo")
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,8 +92,14 @@ export default function ProductsCatalog({
 
   const q = norm(query.trim());
   const shown = catalog.filter(
-    (p) => (!q || norm(p.name).includes(q)) && (!storeFilter || p.rows.has(storeFilter))
+    (p) =>
+      (!q || norm(p.name).includes(q)) &&
+      (!storeFilter || p.rows.has(storeFilter)) &&
+      (categoryFilter === null ||
+        (categoryFilter === NO_CATEGORY ? p.categoryId === null : p.categoryId === categoryFilter))
   );
+  const activeFilters = (storeFilter ? 1 : 0) + (categoryFilter !== null ? 1 : 0);
+  const categoryName = new Map(categories.map((c) => [c.id, c.name]));
 
   return (
     <div className="space-y-4">
@@ -103,34 +122,108 @@ export default function ProductsCatalog({
         </Button>
       </div>
 
-      <Input
-        type="search"
-        placeholder="Išči izdelek …"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-
-      {/* filter po trgovini — telefon: drsenje vstran, računalnik: prelom v več vrstic */}
-      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1">
+          <Input
+            type="search"
+            placeholder="Išči izdelek …"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
         <button
           type="button"
-          onClick={() => setStoreFilter(null)}
-          className={clsx(CHIP, storeFilter === null ? CHIP_ON : CHIP_OFF)}
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((v) => !v)}
+          className={clsx(
+            "flex flex-shrink-0 items-center gap-1.5 rounded-md border px-3 text-sm font-medium",
+            filtersOpen || activeFilters > 0
+              ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+          )}
         >
-          Vse
+          <IconFilter className="h-4 w-4" />
+          Filter
+          {activeFilters > 0 && (
+            <span className="rounded-full bg-emerald-600 px-1.5 text-xs text-white">
+              {activeFilters}
+            </span>
+          )}
         </button>
-        {stores.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStoreFilter(storeFilter === s.id ? null : s.id)}
-            className={clsx(CHIP, storeFilter === s.id ? CHIP_ON : CHIP_OFF)}
-          >
-            <StoreLogo name={s.name} className="h-4 w-4" />
-            {s.name}
-          </button>
-        ))}
       </div>
+
+      {filtersOpen && (
+        <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+          <FilterGroup label="Trgovina">
+            <button
+              type="button"
+              onClick={() => setStoreFilter(null)}
+              className={clsx(CHIP, storeFilter === null ? CHIP_ON : CHIP_OFF)}
+            >
+              Vse
+            </button>
+            {stores.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setStoreFilter(storeFilter === s.id ? null : s.id)}
+                className={clsx(CHIP, storeFilter === s.id ? CHIP_ON : CHIP_OFF)}
+              >
+                <StoreLogo name={s.name} className="h-4 w-4" />
+                {s.name}
+              </button>
+            ))}
+          </FilterGroup>
+          <FilterGroup
+            label="Kategorija"
+            summary={
+              categoryFilter === null
+                ? "Vse"
+                : categoryFilter === NO_CATEGORY
+                  ? "Ostalo"
+                  : categoryName.get(categoryFilter) ?? "Vse"
+            }
+          >
+            <button
+              type="button"
+              onClick={() => setCategoryFilter(null)}
+              className={clsx(CHIP, categoryFilter === null ? CHIP_ON : CHIP_OFF)}
+            >
+              Vse
+            </button>
+            {[...categories.map((c) => ({ id: c.id, name: c.name })), { id: NO_CATEGORY, name: "Ostalo" }].map(
+              (c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCategoryFilter(categoryFilter === c.id ? null : c.id)}
+                  className={clsx(CHIP, categoryFilter === c.id ? CHIP_ON : CHIP_OFF)}
+                >
+                  {c.name}
+                </button>
+              )
+            )}
+          </FilterGroup>
+          {activeFilters > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setStoreFilter(null);
+                setCategoryFilter(null);
+              }}
+              className="text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+              Počisti filtre
+            </button>
+          )}
+        </div>
+      )}
+
+      {(q || activeFilters > 0) && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Prikazanih {shown.length} od {catalog.length}
+        </p>
+      )}
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
@@ -165,8 +258,46 @@ export default function ProductsCatalog({
         open={adding}
         onClose={() => setAdding(false)}
         stores={stores}
+        categories={categories}
         initialStoreId={storeFilter}
+        initialCategoryId={categoryFilter}
       />
+    </div>
+  );
+}
+
+// Skupina filtrov; s `summary` je zložljiva (privzeto zaprta), v glavi pa
+// piše trenutna izbira.
+function FilterGroup({
+  label,
+  summary,
+  children,
+}: {
+  label: string;
+  summary?: string;
+  children: ReactNode;
+}) {
+  const collapsible = summary !== undefined;
+  const [open, setOpen] = useState(!collapsible);
+  return (
+    <div>
+      {collapsible ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="mb-1.5 flex w-full items-center gap-1.5 text-left text-xs font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          <IconChevronDown className={clsx("h-4 w-4 transition-transform", !open && "-rotate-90")} />
+          {label}
+          <span className="min-w-0 truncate font-normal text-emerald-700 dark:text-emerald-400">
+            · {summary}
+          </span>
+        </button>
+      ) : (
+        <p className="mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
+      )}
+      {open && <div className="flex flex-wrap gap-1.5">{children}</div>}
     </div>
   );
 }
@@ -298,15 +429,21 @@ function AddProductDialog({
   open,
   onClose,
   stores,
+  categories,
   initialStoreId,
+  initialCategoryId,
 }: {
   open: boolean;
   onClose: () => void;
   stores: CekarStore[];
+  categories: CekarCategory[];
   initialStoreId: string | null;
+  initialCategoryId: string | null;
 }) {
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  // AUTO = ugane se iz imena (kot pri dodajanju na seznam)
+  const [category, setCategory] = useState(AUTO);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [wasOpen, setWasOpen] = useState(open);
@@ -317,6 +454,7 @@ function AddProductDialog({
     if (open) {
       setName("");
       setSelected(initialStoreId ? [initialStoreId] : []);
+      setCategory(initialCategoryId ?? AUTO);
       setError(null);
     }
   }
@@ -328,7 +466,11 @@ function AddProductDialog({
     if (!name.trim()) return setError("Vpiši ime izdelka.");
     if (selected.length === 0) return setError("Izberi vsaj eno trgovino.");
     startTransition(async () => {
-      const res = await createCatalogProductAction(name, selected);
+      const res = await createCatalogProductAction(
+        name,
+        selected,
+        category === AUTO ? undefined : category === NO_CATEGORY ? null : category
+      );
       if (res.error) setError(res.error);
       else onClose();
     });
@@ -368,6 +510,22 @@ function AddProductDialog({
             ))}
           </div>
         </div>
+        <Field label="Kategorija" htmlFor="catalog-category">
+          <select
+            id="catalog-category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <option value={AUTO}>Samodejno (po imenu)</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+            <option value={NO_CATEGORY}>Ostalo (brez kategorije)</option>
+          </select>
+        </Field>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

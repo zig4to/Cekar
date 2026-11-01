@@ -616,16 +616,19 @@ export async function deleteProductAction(productId: string): Promise<CekarResul
 // imenom. Tako ga predlogi ob dodajanju v vsako od teh trgovin najdejo sami.
 // ids = vse vrstice izdelka (po ena na trgovino).
 
+// chosenCategoryId: undefined = ugani iz imena, null = brez kategorije
 export async function createCatalogProductAction(
   name: string,
-  storeIds: string[]
+  storeIds: string[],
+  chosenCategoryId?: string | null
 ): Promise<CekarResult> {
   const clean = name.trim();
   if (!clean) return { error: "Izdelek ne sme biti prazen." };
   if (storeIds.length === 0) return { error: "Izberi vsaj eno trgovino." };
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
-  const categoryId = await guessCategoryFor(c.supabase, clean);
+  const categoryId =
+    chosenCategoryId !== undefined ? chosenCategoryId : await guessCategoryFor(c.supabase, clean);
   // unikatni indeks je na (store_id, lower(name)) — že obstoječe preskočimo
   const results = await Promise.all(
     storeIds.map((storeId) =>

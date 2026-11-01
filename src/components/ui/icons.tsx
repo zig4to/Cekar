@@ -86,6 +86,12 @@ export const IconTag = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconFilter = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M22 3H2l8 9.5V19l4 2v-8.5Z" />
+  </Base>
+);
+
 export const IconTrash = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6" />
