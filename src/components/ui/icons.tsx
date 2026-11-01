@@ -25,6 +25,15 @@ export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconRepeat = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="m17 2 4 4-4 4" />
+    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+    <path d="m7 22-4-4 4-4" />
+    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+  </Base>
+);
+
 export const IconMinus = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <path d="M5 12h14" />

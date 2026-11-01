@@ -8,6 +8,7 @@ import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { cachedCatalog, cachedList, cachedStoreName } from "@/lib/cekar/preview";
 import { groupByCategory, makeCategoryOf } from "@/lib/cekar/categories";
+import { itemsLabel } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
 
 // Takojšnji pogled seznama med nalaganjem (loading.tsx): iz povzetka, ki ga
@@ -36,7 +37,9 @@ export default function ListPreview() {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-semibold">{summary.name}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {summary.total === 0
+            {summary.isTemplate
+              ? `Stalni seznam · ${itemsLabel(summary.total)}`
+              : summary.total === 0
               ? "Prazen seznam"
               : `${summary.checked} od ${summary.total} v košarici`}
           </p>
@@ -45,7 +48,7 @@ export default function ListPreview() {
         <span className="h-9 w-9" />
       </div>
 
-      {summary.total > 0 && (
+      {!summary.isTemplate && summary.total > 0 && (
         <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
           <div
             className="h-full rounded-full bg-emerald-500"
@@ -109,6 +112,7 @@ export default function ListPreview() {
                       </li>
                     ) : (
                     <li key={idx} className="flex items-center gap-3 px-3 py-2.5">
+                      {!summary.isTemplate && (
                       <span
                         className={clsx(
                           "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2",
@@ -119,6 +123,7 @@ export default function ListPreview() {
                       >
                         {item.checked && <IconCheck className="h-3.5 w-3.5" strokeWidth={3} />}
                       </span>
+                      )}
                       <span
                         className={clsx(
                           "min-w-0 break-words",

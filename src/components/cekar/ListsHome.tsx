@@ -6,8 +6,10 @@ import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
+import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
-import { IconBasket, IconChevronRight, IconPlus } from "@/components/ui/icons";
+import { itemsLabel } from "@/lib/cekar/text";
+import { IconBasket, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import type {
   CekarCategory,
   CekarListSummary,
@@ -15,8 +17,9 @@ import type {
   CekarStore,
 } from "@/lib/types/database.types";
 
-// Domača stran: vsi aktivni nakupovalni seznami gospodinjstva. Vsaka kartica
-// ima gumb za hitro dodajanje izdelka, ne da bi odprl seznam.
+// Domača stran: na vrhu stalni seznam (tedenski nakup, gumb "Zapiši na
+// seznam"), pod njim vsi aktivni nakupovalni seznami. Vsaka kartica ima gumb
+// za hitro dodajanje izdelka, ne da bi odprl seznam.
 export default function ListsHome({
   lists,
   householdName,
@@ -32,6 +35,7 @@ export default function ListsHome({
 }) {
   const [creating, setCreating] = useState(false);
   const [quickList, setQuickList] = useState<CekarListSummary | null>(null);
+  const [writing, setWriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -55,6 +59,9 @@ export default function ListsHome({
   const quickListFresh = quickList
     ? (lists.find((l) => l.id === quickList.id) ?? quickList)
     : null;
+  const template = lists.find((l) => l.isTemplate) ?? null;
+  const shoppingLists = lists.filter((l) => !l.isTemplate);
+
   // Trgovine izbranega seznama (v vrstnem redu seznama) za QuickAddDialog.
   const storeById = new Map(stores.map((s) => [s.id, s]));
   const quickListStores = (quickListFresh?.storeIds ?? [])
@@ -78,7 +85,39 @@ export default function ListsHome({
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      {lists.length === 0 ? (
+      {template && (
+        <section className="overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <Link
+            href={`/seznam/${template.id}`}
+            className="flex items-center gap-3 px-4 pb-2 pt-4"
+          >
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <IconRepeat className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="break-words font-medium">{template.name}</p>
+              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                {template.total === 0
+                  ? "Dodaj izdelke, ki jih kupuješ vsak teden"
+                  : `${itemsLabel(template.total)} · ${template.storeNames.join(" · ")}`}
+              </p>
+            </div>
+            <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+          </Link>
+          <div className="px-4 pb-4 pt-1">
+            <Button
+              onClick={() => setWriting(true)}
+              disabled={template.total === 0}
+              className="w-full"
+            >
+              <IconPlus />
+              Zapiši na seznam
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {shoppingLists.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
           <IconBasket className="h-10 w-10 text-gray-400 dark:text-gray-600" />
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -87,7 +126,7 @@ export default function ListsHome({
         </div>
       ) : (
         <ul className="space-y-2">
-          {lists.map((l) => {
+          {shoppingLists.map((l) => {
             const allDone = l.total > 0 && l.checked === l.total;
             return (
               <li
@@ -144,6 +183,15 @@ export default function ListsHome({
         items={quickListFresh?.items ?? []}
         onAdd={quickAdd}
       />
+      {template && (
+        <WriteToListDialog
+          open={writing}
+          onClose={() => setWriting(false)}
+          items={template.items}
+          stores={template.storeIds.map((id) => ({ id, name: storeById.get(id)?.name ?? "" }))}
+          lists={shoppingLists}
+        />
+      )}
       <PromptDialog
         open={creating}
         onClose={() => setCreating(false)}

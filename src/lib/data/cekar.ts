@@ -90,7 +90,7 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
       // vrstni red kot v ListView — loading.tsx iz tega riše takojšnji pogled
       supabase
         .from("cekar_items")
-        .select("list_id, store_id, product_id, name, checked, quantity")
+        .select("id, list_id, store_id, product_id, name, checked, quantity")
         .order("position")
         .order("created_at"),
       getStores(supabase),
@@ -106,9 +106,11 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
     return {
       id: l.id,
       name: l.name,
+      isTemplate: l.is_template,
       storeNames: storeIds.map((id) => storeName.get(id) ?? ""),
       storeIds,
-      items: own.map(({ store_id, product_id, name, checked, quantity }) => ({
+      items: own.map(({ id, store_id, product_id, name, checked, quantity }) => ({
+        id,
         store_id,
         product_id,
         name,
@@ -159,4 +161,15 @@ export async function getListDetail(
     products,
     categories,
   };
+}
+
+// Nakupovalni seznami (brez stalnega) — cilji za "Zapiši na seznam".
+export async function getShoppingListNames(supabase: Supa) {
+  const { data } = await supabase
+    .from("cekar_lists")
+    .select("id, name")
+    .eq("is_template", false)
+    .is("archived_at", null)
+    .order("created_at", { ascending: false });
+  return data ?? [];
 }

@@ -22,3 +22,10 @@ export function parseQuantity(text: string, fallback = 1) {
   const quantity = Math.min(MAX_QUANTITY, Number(qty));
   return quantity >= 1 ? { name: name.trim(), quantity } : { name: t, quantity: fallback };
 }
+
+// "1 izdelek", "2 izdelka", "3 izdelki", "5 izdelkov" (slovenska dvojina/množina).
+export function itemsLabel(n: number) {
+  const r = n % 100;
+  const word = r === 1 ? "izdelek" : r === 2 ? "izdelka" : r === 3 || r === 4 ? "izdelki" : "izdelkov";
+  return `${n} ${word}`;
+}

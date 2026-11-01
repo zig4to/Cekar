@@ -58,6 +58,7 @@ export type CekarList = {
   name: string;
   created_by: string | null;
   archived_at: string | null;
+  is_template: boolean; // stalni seznam (en na gospodinjstvo)
   created_at: string;
 };
 
@@ -132,6 +133,7 @@ export type CekarMembership = {
 export type CekarListSummary = {
   id: string;
   name: string;
+  isTemplate: boolean;
   storeNames: string[];
   storeIds: string[]; // za hitro dodajanje (trgovine na seznamu najprej)
   items: CekarItemBrief[]; // za hitro dodajanje (brez podvajanja predlogov)
@@ -142,7 +144,7 @@ export type CekarListSummary = {
 // Kar hitro dodajanje potrebuje o izdelkih, ki so že na seznamu.
 export type CekarItemBrief = Pick<
   CekarItem,
-  "store_id" | "product_id" | "name" | "checked" | "quantity"
+  "id" | "store_id" | "product_id" | "name" | "checked" | "quantity"
 >;
 
 // Vse, kar potrebuje pogled enega seznama.

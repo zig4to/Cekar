@@ -144,10 +144,88 @@ export async function renameListAction(
 export async function deleteListAction(listId: string): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
-  const { error } = await c.supabase.from("cekar_lists").delete().eq("id", listId);
+  // stalni seznam se ne briše
+  const { error } = await c.supabase
+    .from("cekar_lists")
+    .delete()
+    .eq("id", listId)
+    .eq("is_template", false);
   if (error) return fail(undefined, "Brisanje ni uspelo.");
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+// Stalni seznam → nakupovalni seznam: izbrane izdelke (id-ji vrstic stalnega
+// seznama) zapiše na obstoječi seznam ali na nov seznam (targetListId null).
+// Izdelek, ki je na ciljnem seznamu v isti trgovini že neodkljukan, preskoči.
+// Trgovine doda brez privzetih izdelkov (ti so lahko že na stalnem seznamu).
+export async function copyTemplateAction(
+  itemIds: string[],
+  targetListId: string | null,
+  newListName: string
+): Promise<CekarResult> {
+  if (!itemIds.length) return { error: "Izberi vsaj en izdelek." };
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+
+  const { data: template } = await c.supabase
+    .from("cekar_lists")
+    .select("id")
+    .eq("is_template", true)
+    .maybeSingle();
+  if (!template) return { error: "Stalnega seznama ni." };
+  const { data: picked } = await c.supabase
+    .from("cekar_items")
+    .select("store_id, name, quantity, position, created_at")
+    .eq("list_id", template.id)
+    .in("id", itemIds)
+    .order("position")
+    .order("created_at");
+  if (!picked?.length) return { error: "Izbrani izdelki niso več na stalnem seznamu." };
+
+  let listId = targetListId;
+  if (!listId) {
+    const name = newListName.trim();
+    if (!name) return { error: "Ime seznama ne sme biti prazno." };
+    const { data, error } = await c.supabase
+      .from("cekar_lists")
+      .insert({ household_id: c.householdId, name, created_by: c.userId })
+      .select("id")
+      .single();
+    if (error || !data) return fail(undefined, "Seznama ni bilo mogoče ustvariti.");
+    listId = data.id;
+  }
+
+  const [{ data: linked }, { data: open }] = await Promise.all([
+    c.supabase.from("cekar_list_stores").select("store_id, position").eq("list_id", listId),
+    c.supabase
+      .from("cekar_items")
+      .select("store_id, name")
+      .eq("list_id", listId)
+      .eq("checked", false),
+  ]);
+  const storeIds = new Set((linked ?? []).map((l) => l.store_id));
+  let position = Math.max(0, ...(linked ?? []).map((l) => l.position));
+  const onList = new Set((open ?? []).map((i) => `${i.store_id}:${i.name.toLowerCase()}`));
+
+  for (const item of picked) {
+    if (onList.has(`${item.store_id}:${item.name.toLowerCase()}`)) continue;
+    if (!storeIds.has(item.store_id)) {
+      await c.supabase
+        .from("cekar_list_stores")
+        .insert({ list_id: listId, store_id: item.store_id, position: ++position });
+      storeIds.add(item.store_id);
+    }
+    // izdelek je v katalogu že s stalnega seznama — kategorija ostane njegova
+    await c.supabase.rpc("cekar_add_item", {
+      p_list_id: listId,
+      p_store_id: item.store_id,
+      p_name: item.name,
+      p_quantity: item.quantity,
+    });
+  }
+  revalidatePath("/", "layout");
+  redirect(`/seznam/${listId}`);
 }
 
 // Doda trgovino na seznam in nanj privzete izdelke trgovine (default_items,

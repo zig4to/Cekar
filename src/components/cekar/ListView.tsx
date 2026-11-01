@@ -16,12 +16,15 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { rememberList } from "@/lib/cekar/preview";
 import { makeCategoryOf } from "@/lib/cekar/categories";
+import { itemsLabel } from "@/lib/cekar/text";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
+import WriteToListDialog from "@/components/cekar/WriteToListDialog";
+import Button from "@/components/ui/Button";
 import ItemEditDialog from "@/components/cekar/ItemEditDialog";
 import type { CekarItem, CekarListDetail, CekarProduct } from "@/lib/types/database.types";
 
@@ -63,9 +66,11 @@ function applyOp(items: CekarItem[], op: OptimisticOp): CekarItem[] {
 export default function ListView({
   detail,
   collapsedStoreIds,
+  shoppingLists,
 }: {
   detail: CekarListDetail;
   collapsedStoreIds: string[];
+  shoppingLists: { id: string; name: string }[]; // cilji za "Zapiši na seznam"
 }) {
   const { list, stores, allStores, categories } = detail;
   const router = useRouter();
@@ -80,6 +85,8 @@ export default function ListView({
   const [editingItem, setEditingItem] = useState<CekarItem | null>(null);
   const [addingStore, setAddingStore] = useState(false);
   const [quickAdd, setQuickAdd] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const isTemplate = list.is_template;
   const tempSeq = useRef(0);
 
   // Živo osveževanje: ob katerikoli spremembi izdelkov/trgovin na seznamih
@@ -108,9 +115,11 @@ export default function ListView({
       {
         id: list.id,
         name: list.name,
+        isTemplate: list.is_template,
         storeNames: stores.map((s) => s.name),
         storeIds: stores.map((s) => s.id),
-        items: detail.items.map(({ store_id, product_id, name, checked, quantity }) => ({
+        items: detail.items.map(({ id, store_id, product_id, name, checked, quantity }) => ({
+          id,
           store_id,
           product_id,
           name,
@@ -124,7 +133,7 @@ export default function ListView({
       detail.products,
       categories
     );
-  }, [list.id, list.name, stores, allStores, detail.items, detail.products, categories]);
+  }, [list.id, list.name, list.is_template, stores, allStores, detail.items, detail.products, categories]);
 
   const run = (op: OptimisticOp, action: () => Promise<{ error?: string }>) => {
     setError(null);
@@ -211,7 +220,11 @@ export default function ListView({
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-semibold">{list.name}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {total === 0 ? "Prazen seznam" : `${checked} od ${total} v košarici`}
+            {isTemplate
+              ? `Stalni seznam · ${itemsLabel(total)}`
+              : total === 0
+                ? "Prazen seznam"
+                : `${checked} od ${total} v košarici`}
           </p>
         </div>
         <Menu label="Možnosti seznama">
@@ -225,6 +238,9 @@ export default function ListView({
               >
                 <IconPencil /> Preimenuj
               </MenuItem>
+              {/* stalni seznam se ne odkljukuje in ne briše */}
+              {!isTemplate && (
+                <>
               <MenuItem
                 onClick={() => {
                   close();
@@ -248,12 +264,25 @@ export default function ListView({
               >
                 <IconTrash /> Izbriši seznam
               </MenuItem>
+                </>
+              )}
             </>
           )}
         </Menu>
       </div>
 
-      {total > 0 && (
+      {isTemplate && (
+        <Button
+          onClick={() => setWriting(true)}
+          disabled={total === 0}
+          className="w-full"
+        >
+          <IconPlus />
+          Zapiši na seznam
+        </Button>
+      )}
+
+      {!isTemplate && total > 0 && (
         <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
           <div
             className="h-full rounded-full bg-emerald-500 transition-all"
@@ -290,6 +319,7 @@ export default function ListView({
           initialCollapsed={collapsedStoreIds.includes(store.id)}
           categories={categories}
           categoryOf={categoryOf}
+          template={isTemplate}
         />
       ))}
 
@@ -319,6 +349,15 @@ export default function ListView({
         items={items}
         onAdd={onAdd}
       />
+      {isTemplate && (
+        <WriteToListDialog
+          open={writing}
+          onClose={() => setWriting(false)}
+          items={items.filter((i) => !i.id.startsWith("temp-"))}
+          stores={stores}
+          lists={shoppingLists}
+        />
+      )}
       <AddStoreDialog
         open={addingStore}
         onClose={() => setAddingStore(false)}

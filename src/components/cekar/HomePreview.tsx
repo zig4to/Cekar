@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { IconChevronRight, IconPlus } from "@/components/ui/icons";
+import { IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
+import { itemsLabel } from "@/lib/cekar/text";
 import { ListSkeleton } from "@/components/cekar/ListPreview";
 import { cachedHouseholdName, cachedLists } from "@/lib/cekar/preview";
 
@@ -10,8 +11,10 @@ import { cachedHouseholdName, cachedLists } from "@/lib/cekar/preview";
 // ListsHome). Drugje (nastavitve) ali brez predpomnilnika — okostje.
 export default function HomePreview() {
   const pathname = usePathname();
-  const lists = cachedLists();
-  if (pathname !== "/" || lists.length === 0) return <ListSkeleton />;
+  const all = cachedLists();
+  if (pathname !== "/" || all.length === 0) return <ListSkeleton />;
+  const template = all.find((l) => l.isTemplate);
+  const lists = all.filter((l) => !l.isTemplate);
 
   return (
     <div className="space-y-4">
@@ -27,6 +30,24 @@ export default function HomePreview() {
           Nov seznam
         </span>
       </div>
+      {template && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <IconRepeat className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="break-words font-medium">{template.name}</p>
+              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                {itemsLabel(template.total)}
+              </p>
+            </div>
+          </div>
+          <div className="px-4 pb-4 pt-1">
+            <div className="h-9 rounded-md bg-emerald-600 opacity-80" />
+          </div>
+        </div>
+      )}
       <ul className="space-y-2">
         {lists.map((l) => (
           <li

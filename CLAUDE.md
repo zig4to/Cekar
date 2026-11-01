@@ -65,6 +65,13 @@ Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
 (Mlekarica → Domače mleko). Urejanje zaenkrat samo v bazi.
 
+`0007_template_list.sql`: `cekar_lists.is_template` — **stalni seznam** (en na
+gospodinjstvo, partial unique index), pripet na vrh `ListsHome`. Ureja se kot
+navaden seznam (`ListView`/`StoreSection` s `template` = brez odkljukanja, brez
+brisanja). „Zapiši na seznam“ (`WriteToListDialog` → `copyTemplateAction`)
+izbrane izdelke prepiše na obstoječi ali nov seznam (preskoči že neodkljukane,
+trgovine doda brez `default_items`) in preusmeri nanj.
+
 `0006_categories.sql`: `cekar_categories` (`position` = vrstni red skupin,
 `keywords` = začetki besed brez šumnikov) in `cekar_products.category_id`.
 Kategorija je na izdelku v **katalogu** (ne na vrstici seznama). Ob novem

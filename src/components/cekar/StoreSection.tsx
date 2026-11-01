@@ -47,6 +47,7 @@ export default function StoreSection({
   initialCollapsed,
   categories,
   categoryOf,
+  template = false,
 }: {
   listId: string;
   store: CekarStore;
@@ -61,6 +62,7 @@ export default function StoreSection({
   initialCollapsed: boolean; // iz piškotka, prebranega na strežniku
   categories: CekarCategory[];
   categoryOf: (item: CekarItem) => string | null;
+  template?: boolean; // stalni seznam: brez odkljukanja
 }) {
   const open = items
     .filter((i) => !i.checked)
@@ -130,7 +132,7 @@ export default function StoreSection({
           <StoreLogo name={store.name} />
           <h2 className="min-w-0 flex-1 truncate font-semibold">{store.name}</h2>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {checked.length}/{items.length}
+            {template ? items.length : `${checked.length}/${items.length}`}
           </span>
         </button>
         <Menu label={`Možnosti za ${store.name}`}>
@@ -175,10 +177,11 @@ export default function StoreSection({
               >
                 <button
                   type="button"
-                  disabled={isTemp(item)}
+                  disabled={isTemp(item) || template}
                   onClick={() => onToggle(item)}
                   className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left"
                 >
+                  {!template && (
                   <span
                     className={clsx(
                       "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2",
@@ -189,6 +192,7 @@ export default function StoreSection({
                   >
                     {item.checked && <IconCheck className="h-3.5 w-3.5" strokeWidth={3} />}
                   </span>
+                  )}
                   <span
                     className={clsx(
                       "min-w-0 break-words",
