@@ -1,0 +1,144 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  CekarListDetail,
+  CekarListSummary,
+  CekarMember,
+  CekarMembership,
+  Database,
+} from "@/lib/types/database.types";
+
+// Samo branje. RLS omeji vse poizvedbe na gospodinjstvo prijavljenega
+// uporabnika (cekar_my_household()), zato eksplicitni filtri po
+// household_id niso nujni — dodani so tam, kjer pomagajo indeksu.
+type Supa = SupabaseClient<Database>;
+
+export async function getMembership(
+  supabase: Supa,
+  userId: string
+): Promise<CekarMembership | null> {
+  const { data: member } = await supabase
+    .from("cekar_members")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!member) return null;
+
+  const { data: household } = await supabase
+    .from("cekar_households")
+    .select("*")
+    .eq("id", member.household_id)
+    .maybeSingle();
+  if (!household) return null;
+
+  return { member, household };
+}
+
+export async function getMembers(
+  supabase: Supa,
+  householdId: string
+): Promise<CekarMember[]> {
+  const { data } = await supabase
+    .from("cekar_members")
+    .select("*")
+    .eq("household_id", householdId)
+    .order("joined_at");
+  return data ?? [];
+}
+
+export async function getStores(supabase: Supa, householdId: string) {
+  const { data } = await supabase
+    .from("cekar_stores")
+    .select("*")
+    .eq("household_id", householdId)
+    .order("position")
+    .order("created_at");
+  return data ?? [];
+}
+
+export async function getListSummaries(
+  supabase: Supa,
+  householdId: string
+): Promise<CekarListSummary[]> {
+  const { data: lists } = await supabase
+    .from("cekar_lists")
+    .select("*")
+    .eq("household_id", householdId)
+    .is("archived_at", null)
+    .order("created_at", { ascending: false });
+  if (!lists?.length) return [];
+
+  const ids = lists.map((l) => l.id);
+  const [{ data: listStores }, { data: items }, stores] = await Promise.all([
+    supabase
+      .from("cekar_list_stores")
+      .select("list_id, store_id, position")
+      .in("list_id", ids)
+      .order("position"),
+    supabase.from("cekar_items").select("list_id, checked").in("list_id", ids),
+    getStores(supabase, householdId),
+  ]);
+  const storeName = new Map(stores.map((s) => [s.id, s.name]));
+
+  return lists.map((l) => {
+    const own = (items ?? []).filter((i) => i.list_id === l.id);
+    return {
+      id: l.id,
+      name: l.name,
+      storeNames: (listStores ?? [])
+        .filter((ls) => ls.list_id === l.id)
+        .map((ls) => storeName.get(ls.store_id) ?? "")
+        .filter(Boolean),
+      total: own.length,
+      checked: own.filter((i) => i.checked).length,
+    };
+  });
+}
+
+export async function getListDetail(
+  supabase: Supa,
+  householdId: string,
+  listId: string
+): Promise<CekarListDetail | null> {
+  const { data: list } = await supabase
+    .from("cekar_lists")
+    .select("*")
+    .eq("id", listId)
+    .maybeSingle();
+  if (!list) return null;
+
+  const [{ data: listStores }, { data: items }, allStores, { data: products }] =
+    await Promise.all([
+      supabase
+        .from("cekar_list_stores")
+        .select("*")
+        .eq("list_id", listId)
+        .order("position")
+        .order("created_at"),
+      supabase
+        .from("cekar_items")
+        .select("*")
+        .eq("list_id", listId)
+        .order("position")
+        .order("created_at"),
+      getStores(supabase, householdId),
+      supabase
+        .from("cekar_products")
+        .select("*")
+        .eq("household_id", householdId)
+        .order("use_count", { ascending: false })
+        .order("last_used_at", { ascending: false }),
+    ]);
+
+  const byId = new Map(allStores.map((s) => [s.id, s]));
+  const stores = (listStores ?? [])
+    .map((ls) => byId.get(ls.store_id))
+    .filter((s) => s !== undefined);
+
+  return {
+    list,
+    stores,
+    items: items ?? [],
+    allStores,
+    products: products ?? [],
+  };
+}

@@ -1,0 +1,86 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Kaj je Cekar
+
+Skupni nakupovalni seznami po trgovinah. Uporabnik ustvari poimenovan seznam,
+nanj doda trgovine (Lidl, Hofer, Mercator, Spar …), pod vsako pa izdelke kot
+checklisto. **Vsak izdelek je vezan na trgovino**: ob dodajanju v npr. Lidl se
+pod poljem pokažejo predlogi izdelkov, ki so bili v Lidl že kdaj dodani.
+Seznami so deljeni prek **gospodinjstva** (člani se pridružijo s kodo).
+
+Ogrodje je kopija aplikacije **Vzlet** (prijava, SSO iz huba TomsStudios, tema,
+PWA/service worker, UI primitivi) — isti Supabase projekt kot Pisi/Posel/Vzlet,
+tabele imajo predpono `cekar_`.
+
+Stack: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 ·
+`@supabase/ssr`. Deploy: Vercel.
+
+## Ukazi
+
+```bash
+npm install
+npm run dev      # http://localhost:3006
+npm run lint
+npm run build
+```
+
+Testov v projektu ni.
+
+## Okoljske spremenljivke (`.env.local`)
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+## Baza (Supabase) — migracije se poganjajo ROČNO
+
+Ni Supabase CLI toka: vsako `supabase/migrations/000N_*.sql` prilepi v
+**Supabase Dashboard → SQL Editor** in poženi. Commit `.sql` datoteke ne
+pomeni, da je izvedena. `src/lib/types/database.types.ts` je **ročno
+napisan** — ob novi migraciji ga posodobi.
+
+Tabele (`0001_init.sql`):
+- `cekar_households` (`invite_code`), `cekar_members` (PK `user_id` → en
+  uporabnik = največ eno gospodinjstvo).
+- `cekar_stores` — trgovine gospodinjstva; ob ustvarjanju gospodinjstva seed
+  Lidl/Hofer/Mercator/Spar.
+- `cekar_products` — katalog izdelkov **na trgovino** (unique
+  `(store_id, lower(name))`, `use_count`, `last_used_at`) = vir predlogov.
+- `cekar_lists`, `cekar_list_stores` (trgovine na seznamu, `position`),
+  `cekar_items` (izdelek na seznamu: `store_id`, `product_id`, `checked`).
+
+RLS: `cekar_my_household()` (security definer) — vse tabele so omejene na
+gospodinjstvo prijavljenega; `cekar_list_stores`/`cekar_items` prek
+`list_id` → `cekar_lists`. Vstop v gospodinjstvo samo prek RPC
+`cekar_create_household` / `cekar_join_household` (security definer).
+Dodajanje izdelka gre prek RPC **`cekar_add_item`** (security invoker), ki v
+enem koraku upserta katalog (`use_count + 1`) in vstavi vrstico na seznam —
+ne vstavljaj v `cekar_items` mimo njega, sicer katalog ne raste.
+Realtime publikacija: `cekar_items`, `cekar_list_stores`.
+
+## Arhitektura
+
+Enako kot Vzlet: server `src/app/(app)/*/page.tsx` → branje prek
+`src/lib/data/cekar.ts` → `"use client"` komponente v `src/components/cekar/`.
+Mutacije: `"use server"` akcije v `src/actions/cekar.ts` (helper `ctx()` vrne
+klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
+
+- `(app)/layout.tsx` — zgornja vrstica; uporabnik brez članstva vidi
+  `Onboarding` namesto vsebine strani.
+- `/` `ListsHome` · `/seznam/[id]` `ListView` → `StoreSection` →
+  `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
+  brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
+  (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
+- `ListView` uporablja `useOptimistic` (takojšnje odkljukanje/dodajanje;
+  začasni id `temp-N`, na katerem so akcije onemogočene) in Supabase realtime
+  kanal, ki ob spremembi drugega člana pokliče `router.refresh()`.
+
+### PWA / middleware past
+
+`src/proxy.ts` matcher **mora** izključevati statične `.js` (`sw.js`,
+`install-promo.js`), sicer neprijavljen uporabnik dobi HTML prijave namesto
+skripte in SW se pokvari. `public/sw.js` je network-first; ob spremembi
+povečaj `VERZIJA`.
