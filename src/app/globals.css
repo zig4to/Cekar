@@ -21,6 +21,12 @@
   --font-sans: var(--font-rubik);
 }
 
+/* Brez utripajočega kazalca (kurzorja) nikjer v aplikaciji — tudi v vnosnih
+   poljih; vneseno besedilo je še vedno vidno. */
+* {
+  caret-color: transparent;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
