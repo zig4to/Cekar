@@ -142,6 +142,32 @@ export async function renameListAction(
   return done();
 }
 
+// "Nakup opravljen": seznam gre v arhiv (/arhiv) in izgine z domače strani.
+// Stalni seznam se ne arhivira.
+export async function archiveListAction(listId: string): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_lists")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", listId)
+    .eq("is_template", false);
+  if (error) return fail(undefined, "Premik v arhiv ni uspel.");
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+
+export async function unarchiveListAction(listId: string): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_lists")
+    .update({ archived_at: null })
+    .eq("id", listId);
+  if (error) return fail(undefined, "Vrnitev iz arhiva ni uspela.");
+  return done();
+}
+
 export async function deleteListAction(listId: string): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };

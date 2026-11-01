@@ -7,7 +7,9 @@ import {
   addItemAction,
   clearCheckedAction,
   deleteItemAction,
+  archiveListAction,
   deleteListAction,
+  unarchiveListAction,
   removeStoreFromListAction,
   renameListAction,
   toggleItemAction,
@@ -19,7 +21,7 @@ import { makeCategoryOf } from "@/lib/cekar/categories";
 import { formatEur, itemsLabel } from "@/lib/cekar/text";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
-import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
+import { IconArrowLeft, IconCheck, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
 import SingleItemStore from "@/components/cekar/SingleItemStore";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
@@ -88,6 +90,7 @@ export default function ListView({
   const [quickAdd, setQuickAdd] = useState(false);
   const [writing, setWriting] = useState(false);
   const isTemplate = list.is_template;
+  const archived = list.archived_at !== null;
   const spentTotal = Object.values(detail.spent).reduce((a, b) => a + b, 0);
   const tempSeq = useRef(0);
 
@@ -135,7 +138,7 @@ export default function ListView({
       detail.products,
       categories
     );
-  }, [list.id, list.name, list.is_template, stores, allStores, detail.items, detail.products, categories]);
+  }, [archived, list.id, list.name, list.is_template, stores, allStores, detail.items, detail.products, categories]);
 
   const run = (op: OptimisticOp, action: () => Promise<{ error?: string }>) => {
     setError(null);
@@ -218,7 +221,7 @@ export default function ListView({
     <div className="space-y-4 pb-24">
       <div className="flex items-center gap-2">
         <Link
-          href="/"
+          href={archived ? "/arhiv" : "/"}
           aria-label="Nazaj na sezname"
           className="-ml-2 rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
         >
@@ -288,6 +291,32 @@ export default function ListView({
           <IconPlus />
           Zapiši na seznam
         </Button>
+      )}
+
+      {archived && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="min-w-0 flex-1 text-amber-900 dark:text-amber-200">
+            Nakup opravljen{" "}
+            {new Date(list.archived_at!).toLocaleDateString("sl-SI", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            · seznam je v arhivu.
+          </p>
+          <Button
+            variant="secondary"
+            className="flex-shrink-0"
+            onClick={() =>
+              startTransition(async () => {
+                const res = await unarchiveListAction(list.id);
+                if (res.error) setError(res.error);
+              })
+            }
+          >
+            Vrni med sezname
+          </Button>
+        </div>
       )}
 
       {!isTemplate && total > 0 && (
@@ -360,6 +389,9 @@ export default function ListView({
         <IconPlus /> Dodaj trgovino
       </button>
 
+      {/* nakup opravljen → potrditev v istem mestu → seznam v arhiv */}
+      {!isTemplate && !archived && <FinishShopping listId={list.id} />}
+
       <button
         type="button"
         onClick={() => setQuickAdd(true)}
@@ -408,6 +440,55 @@ export default function ListView({
         categoryOf={categoryOf}
         onSave={onSaveEdit}
       />
+    </div>
+  );
+}
+
+// "Nakup opravljen" pod "Dodaj trgovino": prvi klik odpre majhno potrditev
+// na istem mestu (ne okna čez zaslon), potrditev seznam premakne v arhiv.
+function FinishShopping({ listId }: { listId: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+      >
+        <IconCheck className="h-5 w-5" /> Nakup opravljen
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+      <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+        Ali ste prepričani?
+      </p>
+      <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-200/70">
+        Seznam se premakne v arhiv nakupov. Od tam ga lahko kadar koli vrnete.
+      </p>
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="mt-3 flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => setConfirming(false)} disabled={pending}>
+          Prekliči
+        </Button>
+        <Button
+          autoFocus
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              const res = await archiveListAction(listId);
+              if (res?.error) setError(res.error);
+            })
+          }
+        >
+          Da, v arhiv
+        </Button>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,14 @@ import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
 import { itemsLabel } from "@/lib/cekar/text";
-import { IconBasket, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
+import {
+  IconBasket,
+  IconBook,
+  IconChevronRight,
+  IconPlus,
+  IconRepeat,
+} from "@/components/ui/icons";
+import clsx from "@/lib/utils/clsx";
 import type {
   CekarCategory,
   CekarListSummary,
@@ -95,34 +102,38 @@ export default function ListsHome({
         </div>
       ) : (
         <ul className="space-y-2">
-          {shoppingLists.map((l) => {
-            const allDone = l.total > 0 && l.checked === l.total;
+          {shoppingLists.map((l, i) => {
+            // najnovejši seznam (razvrščeni po created_at padajoče) = aktualni nakup
+            const current = i === 0;
             return (
               <li
                 key={l.id}
-                className="flex items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white hover:border-emerald-400 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-emerald-700"
+                className={clsx(
+                  "flex items-stretch overflow-hidden rounded-lg border bg-white hover:border-emerald-400 dark:bg-gray-900 dark:hover:border-emerald-700",
+                  current
+                    ? "border-emerald-400 ring-1 ring-emerald-400 dark:border-emerald-700 dark:ring-emerald-700"
+                    : "border-gray-200 dark:border-gray-800"
+                )}
               >
                 <Link
                   href={`/seznam/${l.id}`}
-                  className="flex min-w-0 flex-1 items-center gap-3 p-4"
+                  className={clsx(
+                    "flex min-w-0 flex-1 items-center gap-3",
+                    current ? "px-4 py-6" : "p-4"
+                  )}
                 >
                   <div className="min-w-0 flex-1">
-                    {/* naslov ima celo vrstico zase (po potrebi se prelomi),
-                        števec je v vrstici s trgovinami pod njim */}
-                    <p className="break-words font-medium">{l.name}</p>
+                    {current && (
+                      <span className="mb-1.5 inline-block rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                        Aktualno
+                      </span>
+                    )}
+                    {/* naslov ima celo vrstico zase (po potrebi se prelomi), pod njim trgovine */}
+                    <p className={clsx("break-words font-medium", current && "text-lg")}>{l.name}</p>
                     <div className="mt-0.5 flex items-center gap-2">
                       <p className="min-w-0 flex-1 truncate text-sm text-gray-500 dark:text-gray-400">
                         {l.storeNames.length ? l.storeNames.join(" · ") : "Brez trgovin"}
                       </p>
-                      <span
-                        className={
-                          allDone
-                            ? "flex-shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                        }
-                      >
-                        {l.checked}/{l.total}
-                      </span>
                     </div>
                   </div>
                   <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
@@ -174,6 +185,13 @@ export default function ListsHome({
           </div>
         </section>
       )}
+
+      <Link
+        href="/arhiv"
+        className="flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+      >
+        <IconBook className="h-4 w-4" /> Arhiv nakupov
+      </Link>
 
       <QuickAddDialog
         title={quickList ? `Dodaj na „${quickList.name}“` : undefined}

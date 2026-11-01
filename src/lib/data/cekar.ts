@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CekarListDetail,
   CekarListSummary,
+  CekarArchivedList,
   CekarSpentMonth,
   CekarMember,
   CekarMembership,
@@ -203,6 +204,39 @@ export async function getListDetail(
 }
 
 // Nakupovalni seznami (brez stalnega) — cilji za "Zapiši na seznam".
+// Arhiv nakupov: opravljeni (arhivirani) seznami, najnovejši najprej, s
+// trgovinami, številom izdelkov in zapravljenim.
+export async function getArchivedLists(supabase: Supa): Promise<CekarArchivedList[]> {
+  const { data: lists } = await supabase
+    .from("cekar_lists")
+    .select("id, name, archived_at")
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false });
+  if (!lists?.length) return [];
+  const ids = lists.map((l) => l.id);
+  const [{ data: listStores }, { data: items }, stores] = await Promise.all([
+    supabase
+      .from("cekar_list_stores")
+      .select("list_id, store_id, spent, position")
+      .in("list_id", ids)
+      .order("position"),
+    supabase.from("cekar_items").select("list_id").in("list_id", ids),
+    getStores(supabase),
+  ]);
+  const storeName = new Map(stores.map((s) => [s.id, s.name]));
+  return lists.map((l) => {
+    const own = (listStores ?? []).filter((ls) => ls.list_id === l.id);
+    return {
+      id: l.id,
+      name: l.name,
+      archivedAt: l.archived_at!,
+      storeNames: own.map((ls) => storeName.get(ls.store_id)).filter((n) => n !== undefined),
+      itemCount: (items ?? []).filter((i) => i.list_id === l.id).length,
+      spent: own.reduce((sum, ls) => sum + (ls.spent === null ? 0 : Number(ls.spent)), 0),
+    };
+  });
+}
+
 export async function getShoppingListNames(supabase: Supa) {
   const { data } = await supabase
     .from("cekar_lists")

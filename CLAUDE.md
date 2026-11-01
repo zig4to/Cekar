@@ -133,6 +133,11 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
   brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
   (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
+- Arhiv: „Nakup opravljen“ pod „Dodaj trgovino“ (`FinishShopping` v `ListView`,
+  potrditev na mestu) → `archiveListAction` nastavi `cekar_lists.archived_at`
+  (stolpec iz 0001). `/arhiv` `ArchiveList` (povezava na dnu `ListsHome`);
+  arhiviran seznam ima pas „Vrni med sezname“. Najnovejši seznam na domači
+  strani je večja kartica z oznako „Aktualno“.
 - `/izdelki` `ProductsCatalog` (gumb v zgornji vrstici) — skupni seznam izdelkov:
   vrstice `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri
   njem = vrstice. Dodaš trgovino → nova vrstica (`use_count` 0), zato se izdelek

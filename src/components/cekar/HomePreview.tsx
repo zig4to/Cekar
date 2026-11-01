@@ -31,21 +31,27 @@ export default function HomePreview() {
         </div>
       </div>
       <ul className="space-y-2">
-        {lists.map((l) => (
+        {lists.map((l, i) => (
           <li
             key={l.id}
-            className="flex items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+            className={
+              i === 0
+                ? "flex items-stretch overflow-hidden rounded-lg border border-emerald-400 bg-white ring-1 ring-emerald-400 dark:border-emerald-700 dark:bg-gray-900 dark:ring-emerald-700"
+                : "flex items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+            }
           >
-            <div className="flex min-w-0 flex-1 items-center gap-3 p-4">
+            <div className={`flex min-w-0 flex-1 items-center gap-3 ${i === 0 ? "px-4 py-6" : "p-4"}`}>
               <div className="min-w-0 flex-1">
-                <p className="break-words font-medium">{l.name}</p>
+                {i === 0 && (
+                  <span className="mb-1.5 inline-block rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                    Aktualno
+                  </span>
+                )}
+                <p className={`break-words font-medium ${i === 0 ? "text-lg" : ""}`}>{l.name}</p>
                 <div className="mt-0.5 flex items-center gap-2">
                   <p className="min-w-0 flex-1 truncate text-sm text-gray-500 dark:text-gray-400">
                     {l.storeNames.length ? l.storeNames.join(" · ") : "Brez trgovin"}
                   </p>
-                  <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                    {l.checked}/{l.total}
-                  </span>
                 </div>
               </div>
               <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />

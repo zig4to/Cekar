@@ -156,6 +156,16 @@ export type CekarListSummary = {
   checked: number;
 };
 
+// Opravljen nakup v arhivu (/arhiv).
+export type CekarArchivedList = {
+  id: string;
+  name: string;
+  archivedAt: string;
+  storeNames: string[];
+  itemCount: number;
+  spent: number; // vsota vnesenih zneskov trgovin (EUR)
+};
+
 // Kar hitro dodajanje potrebuje o izdelkih, ki so že na seznamu.
 export type CekarItemBrief = Pick<
   CekarItem,
