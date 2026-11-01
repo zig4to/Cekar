@@ -208,6 +208,7 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
       {stores.map((store) => (
         <StoreSection
           key={store.id}
+          listId={list.id}
           store={store}
           items={items.filter((i) => i.store_id === store.id)}
           products={products.filter((p) => p.store_id === store.id)}
