@@ -114,9 +114,14 @@ export type CekarListSummary = {
   id: string;
   name: string;
   storeNames: string[];
+  storeIds: string[]; // za hitro dodajanje (trgovine na seznamu najprej)
+  items: CekarItemBrief[]; // za hitro dodajanje (brez podvajanja predlogov)
   total: number;
   checked: number;
 };
+
+// Kar hitro dodajanje potrebuje o izdelkih, ki so že na seznamu.
+export type CekarItemBrief = Pick<CekarItem, "store_id" | "name" | "checked">;
 
 // Vse, kar potrebuje pogled enega seznama.
 export type CekarListDetail = {

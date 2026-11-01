@@ -74,7 +74,8 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   `AddItemInput` (predlogi: katalog te trgovine, brez šumnikov/velikih črk,
   brez izdelkov, ki so že neodkljukani) · `/nastavitve` `Settings`
   (koda za povabilo, člani, trgovine z vrstnim redom, tema, odjava).
-- Plavajoči gumb „Hitro dodaj“ v `ListView` odpre `QuickAddDialog`: predlogi
+- Plavajoči gumb „Hitro dodaj“ v `ListView` in gumb + na vsaki kartici v
+  `ListsHome` odpreta `QuickAddDialog`: predlogi
   iz kataloga **vseh** trgovin z oznako trgovine (npr. „Malinovec · Lidl“),
   za nov izdelek gumbi trgovin. `addItemAction` trgovino, ki še ni na
   seznamu, doda sama. `norm()` (brez šumnikov) je v `src/lib/cekar/text.ts`.

@@ -55,6 +55,17 @@ export async function getStores(supabase: Supa, householdId: string) {
   return data ?? [];
 }
 
+// Katalog izdelkov gospodinjstva (vse trgovine), najpogostejši najprej.
+export async function getProducts(supabase: Supa, householdId: string) {
+  const { data } = await supabase
+    .from("cekar_products")
+    .select("*")
+    .eq("household_id", householdId)
+    .order("use_count", { ascending: false })
+    .order("last_used_at", { ascending: false });
+  return data ?? [];
+}
+
 export async function getListSummaries(
   supabase: Supa,
   householdId: string
@@ -74,20 +85,25 @@ export async function getListSummaries(
       .select("list_id, store_id, position")
       .in("list_id", ids)
       .order("position"),
-    supabase.from("cekar_items").select("list_id, checked").in("list_id", ids),
+    supabase
+      .from("cekar_items")
+      .select("list_id, store_id, name, checked")
+      .in("list_id", ids),
     getStores(supabase, householdId),
   ]);
   const storeName = new Map(stores.map((s) => [s.id, s.name]));
 
   return lists.map((l) => {
     const own = (items ?? []).filter((i) => i.list_id === l.id);
+    const storeIds = (listStores ?? [])
+      .filter((ls) => ls.list_id === l.id && storeName.has(ls.store_id))
+      .map((ls) => ls.store_id);
     return {
       id: l.id,
       name: l.name,
-      storeNames: (listStores ?? [])
-        .filter((ls) => ls.list_id === l.id)
-        .map((ls) => storeName.get(ls.store_id) ?? "")
-        .filter(Boolean),
+      storeNames: storeIds.map((id) => storeName.get(id) ?? ""),
+      storeIds,
+      items: own.map(({ store_id, name, checked }) => ({ store_id, name, checked })),
       total: own.length,
       checked: own.filter((i) => i.checked).length,
     };
@@ -106,7 +122,7 @@ export async function getListDetail(
     .maybeSingle();
   if (!list) return null;
 
-  const [{ data: listStores }, { data: items }, allStores, { data: products }] =
+  const [{ data: listStores }, { data: items }, allStores, products] =
     await Promise.all([
       supabase
         .from("cekar_list_stores")
@@ -121,12 +137,7 @@ export async function getListDetail(
         .order("position")
         .order("created_at"),
       getStores(supabase, householdId),
-      supabase
-        .from("cekar_products")
-        .select("*")
-        .eq("household_id", householdId)
-        .order("use_count", { ascending: false })
-        .order("last_used_at", { ascending: false }),
+      getProducts(supabase, householdId),
     ]);
 
   const byId = new Map(allStores.map((s) => [s.id, s]));
@@ -139,6 +150,6 @@ export async function getListDetail(
     stores,
     items: items ?? [],
     allStores,
-    products: products ?? [],
+    products,
   };
 }

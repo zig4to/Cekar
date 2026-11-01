@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { IconPlus, IconStore } from "@/components/ui/icons";
 import { norm } from "@/lib/cekar/text";
-import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.types";
+import type { CekarItemBrief, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 8;
 
@@ -14,6 +14,7 @@ const MAX_SUGGESTIONS = 8;
 // če trgovine še ni na seznamu, jo strežnik doda sam (addItemAction).
 // Za nov izdelek izbereš trgovino z gumbi pod predlogi.
 export default function QuickAddDialog({
+  title = "Hitro dodaj izdelek",
   open,
   onClose,
   listStores,
@@ -22,12 +23,13 @@ export default function QuickAddDialog({
   items,
   onAdd,
 }: {
+  title?: string;
   open: boolean;
   onClose: () => void;
   listStores: CekarStore[];
   allStores: CekarStore[];
   products: CekarProduct[]; // že razvrščeni po use_count / last_used_at
-  items: CekarItem[];
+  items: CekarItemBrief[];
   onAdd: (storeId: string, name: string) => void;
 }) {
   const [value, setValue] = useState("");
@@ -78,7 +80,7 @@ export default function QuickAddDialog({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Hitro dodaj izdelek">
+    <Modal open={open} onClose={onClose} title={title}>
       <div className="space-y-3">
         <form
           onSubmit={(e) => {
