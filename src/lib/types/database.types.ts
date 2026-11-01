@@ -37,8 +37,18 @@ export type CekarProduct = {
   household_id: string;
   store_id: string;
   name: string;
+  category_id: string | null; // kategorija izdelka (cekar_categories)
   use_count: number;
   last_used_at: string;
+  created_at: string;
+};
+
+export type CekarCategory = {
+  id: string;
+  household_id: string;
+  name: string;
+  position: number;
+  keywords: string[]; // začetki besed brez šumnikov za samodejno ugibanje
   created_at: string;
 };
 
@@ -80,6 +90,7 @@ export type Database = {
       cekar_members: Table<CekarMember, "user_id" | "household_id">;
       cekar_stores: Table<CekarStore, "household_id" | "name">;
       cekar_products: Table<CekarProduct, "household_id" | "store_id" | "name">;
+      cekar_categories: Table<CekarCategory, "household_id" | "name">;
       cekar_lists: Table<CekarList, "household_id" | "name">;
       cekar_list_stores: Table<CekarListStore, "list_id" | "store_id">;
       cekar_items: Table<CekarItem, "list_id" | "store_id" | "name">;
@@ -101,6 +112,7 @@ export type Database = {
           p_store_id: string;
           p_name: string;
           p_quantity?: number;
+          p_category_id?: string | null;
         };
         Returns: string;
       };
@@ -128,7 +140,10 @@ export type CekarListSummary = {
 };
 
 // Kar hitro dodajanje potrebuje o izdelkih, ki so že na seznamu.
-export type CekarItemBrief = Pick<CekarItem, "store_id" | "name" | "checked" | "quantity">;
+export type CekarItemBrief = Pick<
+  CekarItem,
+  "store_id" | "product_id" | "name" | "checked" | "quantity"
+>;
 
 // Vse, kar potrebuje pogled enega seznama.
 export type CekarListDetail = {
@@ -137,4 +152,5 @@ export type CekarListDetail = {
   items: CekarItem[];
   allStores: CekarStore[]; // vse trgovine gospodinjstva (za "Dodaj trgovino")
   products: CekarProduct[]; // katalog za predloge (vse trgovine)
+  categories: CekarCategory[]; // v vrstnem redu (= vrstni red skupin)
 };

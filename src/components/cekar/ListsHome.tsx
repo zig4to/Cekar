@@ -9,6 +9,7 @@ import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import { rememberLists } from "@/lib/cekar/preview";
 import { IconBasket, IconChevronRight, IconPlus } from "@/components/ui/icons";
 import type {
+  CekarCategory,
   CekarListSummary,
   CekarProduct,
   CekarStore,
@@ -21,11 +22,13 @@ export default function ListsHome({
   householdName,
   stores,
   products,
+  categories,
 }: {
   lists: CekarListSummary[];
   householdName: string;
   stores: CekarStore[];
   products: CekarProduct[];
+  categories: CekarCategory[];
 }) {
   const [creating, setCreating] = useState(false);
   const [quickList, setQuickList] = useState<CekarListSummary | null>(null);
@@ -34,8 +37,8 @@ export default function ListsHome({
 
   // Za takojšnji pogled ob odprtju seznama / vrnitvi sem (loading.tsx).
   useEffect(() => {
-    rememberLists(lists, stores, householdName);
-  }, [lists, stores, householdName]);
+    rememberLists(lists, stores, householdName, products, categories);
+  }, [lists, stores, householdName, products, categories]);
 
   const quickAdd = (storeId: string, name: string, quantity: number) => {
     const list = quickList;

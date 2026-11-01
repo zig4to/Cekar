@@ -2,11 +2,15 @@
 
 import { useState, useTransition } from "react";
 import {
+  createCategoryAction,
   createStoreAction,
+  deleteCategoryAction,
   deleteStoreAction,
   leaveHouseholdAction,
+  renameCategoryAction,
   renameHouseholdAction,
   renameStoreAction,
+  reorderCategoriesAction,
   reorderStoresAction,
   setDisplayNameAction,
 } from "@/actions/cekar";
@@ -26,6 +30,7 @@ import {
   IconTrash,
 } from "@/components/ui/icons";
 import type {
+  CekarCategory,
   CekarMember,
   CekarMembership,
   CekarStore,
@@ -48,11 +53,13 @@ export default function Settings({
   membership,
   members,
   stores,
+  categories,
 }: {
   email: string | null;
   membership: CekarMembership;
   members: CekarMember[];
   stores: CekarStore[];
+  categories: CekarCategory[];
 }) {
   const { household, member } = membership;
   const [prompt, setPrompt] = useState<Prompt | null>(null);
@@ -78,11 +85,17 @@ export default function Settings({
     }
   };
 
-  const move = (index: number, delta: number) => {
-    const ids = stores.map((s) => s.id);
+  // Premik trgovine ali kategorije gor/dol (vrstni red se shrani v celoti).
+  const move = (
+    rows: { id: string }[],
+    reorder: (ids: string[]) => Promise<{ error?: string }>,
+    index: number,
+    delta: number
+  ) => {
+    const ids = rows.map((r) => r.id);
     const [id] = ids.splice(index, 1);
     ids.splice(index + delta, 0, id);
-    run(() => reorderStoresAction(ids));
+    run(() => reorder(ids));
   };
 
   return (
@@ -200,7 +213,7 @@ export default function Settings({
                 aria-label="Gor"
                 disabled={i === 0}
                 className={ICON_BTN}
-                onClick={() => move(i, -1)}
+                onClick={() => move(stores, reorderStoresAction, i, -1)}
               >
                 <IconArrowUp />
               </button>
@@ -209,7 +222,7 @@ export default function Settings({
                 aria-label="Dol"
                 disabled={i === stores.length - 1}
                 className={ICON_BTN}
-                onClick={() => move(i, 1)}
+                onClick={() => move(stores, reorderStoresAction, i, 1)}
               >
                 <IconArrowDown />
               </button>
@@ -239,6 +252,86 @@ export default function Settings({
                     )
                   ) {
                     run(() => deleteStoreAction(s.id));
+                  }
+                }}
+              >
+                <IconTrash />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={CARD}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-semibold">Kategorije</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              V tem vrstnem redu so izdelki razvrščeni znotraj trgovine.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            className="flex-shrink-0"
+            onClick={() =>
+              setPrompt({
+                title: "Nova kategorija",
+                label: "Ime kategorije",
+                onSubmit: createCategoryAction,
+              })
+            }
+          >
+            <IconPlus /> Dodaj
+          </Button>
+        </div>
+        <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          {categories.map((c, i) => (
+            <li key={c.id} className="flex items-center gap-1 py-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm">{c.name}</span>
+              <button
+                type="button"
+                aria-label="Gor"
+                disabled={i === 0}
+                className={ICON_BTN}
+                onClick={() => move(categories, reorderCategoriesAction, i, -1)}
+              >
+                <IconArrowUp />
+              </button>
+              <button
+                type="button"
+                aria-label="Dol"
+                disabled={i === categories.length - 1}
+                className={ICON_BTN}
+                onClick={() => move(categories, reorderCategoriesAction, i, 1)}
+              >
+                <IconArrowDown />
+              </button>
+              <button
+                type="button"
+                aria-label={`Preimenuj ${c.name}`}
+                className={ICON_BTN}
+                onClick={() =>
+                  setPrompt({
+                    title: "Preimenuj kategorijo",
+                    label: "Ime kategorije",
+                    initialValue: c.name,
+                    onSubmit: (name) => renameCategoryAction(c.id, name),
+                  })
+                }
+              >
+                <IconPencil />
+              </button>
+              <button
+                type="button"
+                aria-label={`Izbriši ${c.name}`}
+                className={ICON_BTN}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Izbrišem kategorijo ${c.name}? Njeni izdelki ostanejo, le pod „Ostalo“.`
+                    )
+                  ) {
+                    run(() => deleteCategoryAction(c.id));
                   }
                 }}
               >

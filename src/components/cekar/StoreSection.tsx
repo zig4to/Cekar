@@ -16,8 +16,14 @@ import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import { MAX_QUANTITY } from "@/lib/cekar/text";
 import { setCollapsed } from "@/lib/cekar/collapsed";
+import { groupByCategory } from "@/lib/cekar/categories";
 import clsx from "@/lib/utils/clsx";
-import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.types";
+import type {
+  CekarCategory,
+  CekarItem,
+  CekarProduct,
+  CekarStore,
+} from "@/lib/types/database.types";
 
 // Izdelek, ki še čaka na potrditev strežnika (optimistično dodan).
 const isTemp = (item: CekarItem) => item.id.startsWith("temp-");
@@ -25,8 +31,8 @@ const isTemp = (item: CekarItem) => item.id.startsWith("temp-");
 // Starejša različica je zloženost hranila v localStorage — enkrat prenesemo v piškotek.
 const legacyKey = (listId: string, storeId: string) => `cekar-collapsed:${listId}:${storeId}`;
 
-// Ena trgovina na seznamu: glava, checklista (neodkljukani po vrstnem redu
-// dodajanja, odkljukani na dnu) in vnos novega izdelka s predlogi.
+// Ena trgovina na seznamu: glava, checklista (neodkljukani po kategorijah,
+// znotraj po vrstnem redu dodajanja; odkljukani na dnu) in vnos s predlogi.
 export default function StoreSection({
   listId,
   store,
@@ -39,6 +45,8 @@ export default function StoreSection({
   onQuantity,
   onRemoveStore,
   initialCollapsed,
+  categories,
+  categoryOf,
 }: {
   listId: string;
   store: CekarStore;
@@ -51,6 +59,8 @@ export default function StoreSection({
   onQuantity: (item: CekarItem, quantity: number) => void;
   onRemoveStore: () => void;
   initialCollapsed: boolean; // iz piškotka, prebranega na strežniku
+  categories: CekarCategory[];
+  categoryOf: (item: CekarItem) => string | null;
 }) {
   const open = items
     .filter((i) => !i.checked)
@@ -59,6 +69,23 @@ export default function StoreSection({
     .filter((i) => i.checked)
     .sort((a, b) => (a.checked_at ?? "").localeCompare(b.checked_at ?? ""));
   const openNames = open.map((i) => i.name);
+
+  // Neodkljukani v skupinah po kategorijah (vrstni red kategorij = pot skozi
+  // trgovino), odkljukani na dnu brez skupin. Naslovov ni, če je vse "Ostalo".
+  const groups = groupByCategory(open, categoryOf, categories);
+  const showHeaders = groups.some((g) => g.id !== null);
+  type Row =
+    | { type: "header"; id: string | null; name: string }
+    | { type: "item"; item: CekarItem };
+  const rows: Row[] = [
+    ...(showHeaders
+      ? groups.flatMap((g): Row[] => [
+          { type: "header", id: g.id, name: g.name },
+          ...g.items.map((item): Row => ({ type: "item", item })),
+        ])
+      : open.map((item): Row => ({ type: "item", item }))),
+    ...checked.map((item): Row => ({ type: "item", item })),
+  ];
 
   const [collapsed, setCollapsedState] = useState(initialCollapsed);
   useEffect(() => {
@@ -129,7 +156,19 @@ export default function StoreSection({
       {!collapsed && (
         <>
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {[...open, ...checked].map((item) => (
+            {rows.map((row) => {
+              if (row.type === "header") {
+                return (
+                  <li
+                    key={`kategorija-${row.id ?? "ostalo"}`}
+                    className="bg-gray-50/70 px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-950/40 dark:text-gray-400"
+                  >
+                    {row.name}
+                  </li>
+                );
+              }
+              const item = row.item;
+              return (
               <li
                 key={item.id}
                 className={clsx("flex items-center gap-1 pr-1", isTemp(item) && "opacity-60")}
@@ -204,7 +243,8 @@ export default function StoreSection({
                   </>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
 
           <AddItemInput

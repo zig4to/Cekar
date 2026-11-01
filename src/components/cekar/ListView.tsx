@@ -15,6 +15,7 @@ import {
 } from "@/actions/cekar";
 import { createClient } from "@/lib/supabase/client";
 import { rememberList } from "@/lib/cekar/preview";
+import { makeCategoryOf } from "@/lib/cekar/categories";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
@@ -22,7 +23,13 @@ import StoreSection from "@/components/cekar/StoreSection";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import ItemEditDialog from "@/components/cekar/ItemEditDialog";
-import type { CekarItem, CekarListDetail } from "@/lib/types/database.types";
+import type { CekarItem, CekarListDetail, CekarProduct } from "@/lib/types/database.types";
+
+type CategoryOp = { productId: string; categoryId: string | null };
+
+function applyCategoryOp(products: CekarProduct[], op: CategoryOp): CekarProduct[] {
+  return products.map((p) => (p.id === op.productId ? { ...p, category_id: op.categoryId } : p));
+}
 
 type OptimisticOp =
   | { type: "toggle"; id: string; checked: boolean }
@@ -60,9 +67,13 @@ export default function ListView({
   detail: CekarListDetail;
   collapsedStoreIds: string[];
 }) {
-  const { list, stores, allStores, products } = detail;
+  const { list, stores, allStores, categories } = detail;
   const router = useRouter();
   const [items, applyOptimistic] = useOptimistic(detail.items, applyOp);
+  // Katalog z optimistično spremembo kategorije: izdelek se takoj premakne v
+  // novo skupino, še preden strežnik potrdi.
+  const [products, applyCategory] = useOptimistic(detail.products, applyCategoryOp);
+  const categoryOf = makeCategoryOf(products, categories);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [renamingList, setRenamingList] = useState(false);
@@ -99,8 +110,9 @@ export default function ListView({
         name: list.name,
         storeNames: stores.map((s) => s.name),
         storeIds: stores.map((s) => s.id),
-        items: detail.items.map(({ store_id, name, checked, quantity }) => ({
+        items: detail.items.map(({ store_id, product_id, name, checked, quantity }) => ({
           store_id,
+          product_id,
           name,
           checked,
           quantity,
@@ -108,9 +120,11 @@ export default function ListView({
         total: detail.items.length,
         checked: detail.items.filter((i) => i.checked).length,
       },
-      allStores
+      allStores,
+      detail.products,
+      categories
     );
-  }, [list.id, list.name, stores, allStores, detail.items]);
+  }, [list.id, list.name, stores, allStores, detail.items, detail.products, categories]);
 
   const run = (op: OptimisticOp, action: () => Promise<{ error?: string }>) => {
     setError(null);
@@ -147,6 +161,25 @@ export default function ListView({
       },
       () => addItemAction(list.id, storeId, name, quantity)
     );
+  };
+
+  const onSaveEdit = (
+    item: CekarItem,
+    name: string,
+    quantity: number,
+    categoryId: string | null
+  ) => {
+    const categoryChanged = categoryId !== categoryOf(item);
+    setError(null);
+    startTransition(async () => {
+      applyOptimistic({ type: "edit", id: item.id, name, quantity });
+      if (categoryChanged && item.product_id) {
+        applyCategory({ productId: item.product_id, categoryId });
+      }
+      // kategorijo vedno zapišemo: tudi ugibana (še neshranjena) se tako potrdi
+      const res = await updateItemAction(item.id, name, quantity, categoryId);
+      if (res.error) setError(res.error);
+    });
   };
 
   const onDelete = (item: CekarItem) =>
@@ -255,6 +288,8 @@ export default function ListView({
           }
           onRemoveStore={() => onRemoveStore(store.id)}
           initialCollapsed={collapsedStoreIds.includes(store.id)}
+          categories={categories}
+          categoryOf={categoryOf}
         />
       ))}
 
@@ -301,11 +336,9 @@ export default function ListView({
       <ItemEditDialog
         item={editingItem}
         onClose={() => setEditingItem(null)}
-        onSave={(item, name, quantity) =>
-          run({ type: "edit", id: item.id, name, quantity }, () =>
-            updateItemAction(item.id, name, quantity)
-          )
-        }
+        categories={categories}
+        categoryOf={categoryOf}
+        onSave={onSaveEdit}
       />
     </div>
   );

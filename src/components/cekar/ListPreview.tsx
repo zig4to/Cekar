@@ -6,7 +6,8 @@ import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons
 import { readCollapsed } from "@/lib/cekar/collapsed";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
-import { cachedList, cachedStoreName } from "@/lib/cekar/preview";
+import { cachedCatalog, cachedList, cachedStoreName } from "@/lib/cekar/preview";
+import { groupByCategory, makeCategoryOf } from "@/lib/cekar/categories";
 import clsx from "@/lib/utils/clsx";
 
 // Takojšnji pogled seznama med nalaganjem (loading.tsx): iz povzetka, ki ga
@@ -19,6 +20,8 @@ export default function ListPreview() {
 
   if (!summary) return <ListSkeleton />;
   const collapsedIds = readCollapsed(summary.id);
+  const { products, categories } = cachedCatalog();
+  const categoryOf = makeCategoryOf(products, categories);
 
   return (
     <div className="space-y-4 pb-24">
@@ -53,7 +56,20 @@ export default function ListPreview() {
 
       {summary.storeIds.map((storeId) => {
         const items = summary.items.filter((i) => i.store_id === storeId);
-        const sorted = [...items.filter((i) => !i.checked), ...items.filter((i) => i.checked)];
+        // enako kot StoreSection: neodkljukani po kategorijah, odkljukani na dnu
+        const groups = groupByCategory(
+          items.filter((i) => !i.checked),
+          categoryOf,
+          categories
+        );
+        const showHeaders = groups.some((g) => g.id !== null);
+        const rows = [
+          ...groups.flatMap((g) => [
+            ...(showHeaders ? [{ header: g.name, item: null }] : []),
+            ...g.items.map((item) => ({ header: null, item })),
+          ]),
+          ...items.filter((i) => i.checked).map((item) => ({ header: null, item })),
+        ];
         const collapsed = collapsedIds.includes(storeId);
         return (
           <section
@@ -83,7 +99,15 @@ export default function ListPreview() {
             {!collapsed && (
               <>
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {sorted.map((item, idx) => (
+                  {rows.map(({ header, item }, idx) =>
+                    !item ? (
+                      <li
+                        key={idx}
+                        className="bg-gray-50/70 px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-950/40 dark:text-gray-400"
+                      >
+                        {header}
+                      </li>
+                    ) : (
                     <li key={idx} className="flex items-center gap-3 px-3 py-2.5">
                       <span
                         className={clsx(
@@ -105,7 +129,8 @@ export default function ListPreview() {
                       </span>
                       <QuantityBadge quantity={item.quantity} checked={item.checked} />
                     </li>
-                  ))}
+                    )
+                  )}
                 </ul>
                 <div className="border-t border-gray-100 p-2 dark:border-gray-800">
                   <div className="h-10 rounded-md border border-gray-200 dark:border-gray-700" />

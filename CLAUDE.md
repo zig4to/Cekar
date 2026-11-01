@@ -65,6 +65,17 @@ Realtime publikacija: `cekar_items`, `cekar_list_stores`.
 trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
 (Mlekarica → Domače mleko). Urejanje zaenkrat samo v bazi.
 
+`0006_categories.sql`: `cekar_categories` (`position` = vrstni red skupin,
+`keywords` = začetki besed brez šumnikov) in `cekar_products.category_id`.
+Kategorija je na izdelku v **katalogu** (ne na vrstici seznama). Ob novem
+izdelku jo `addItemAction` ugane (`guessCategory` v `src/lib/cekar/categories.ts`,
+najdaljša ujemajoča ključna beseda; ista logika kot backfill v SQL) in jo
+pošlje v `cekar_add_item(p_category_id)`, ki obstoječe kategorije ne povozi.
+Ročna sprememba v `ItemEditDialog` zapiše na izdelek. `StoreSection` in
+`ListPreview` neodkljukane razvrstita z `groupByCategory` (brez kategorije →
+„Ostalo“ na koncu; naslovov ni, če je vse „Ostalo“). Novo gospodinjstvo dobi
+privzeti nabor prek `cekar_seed_categories` (samo interno, brez EXECUTE).
+
 `0003_item_quantity.sql`: `cekar_items.quantity` (1–999, privzeto 1), RPC
 `cekar_add_item(..., p_quantity default 1)`. Količino nastaviš s
 `QuantityStepper` ob vnosu ali jo vpišeš v ime ("2 mleko", "mleko x2" —

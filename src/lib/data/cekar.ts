@@ -55,6 +55,16 @@ export async function getStores(supabase: Supa) {
   return data ?? [];
 }
 
+// Kategorije v vrstnem redu (= vrstni red skupin znotraj trgovine).
+export async function getCategories(supabase: Supa) {
+  const { data } = await supabase
+    .from("cekar_categories")
+    .select("*")
+    .order("position")
+    .order("created_at");
+  return data ?? [];
+}
+
 // Katalog izdelkov gospodinjstva (vse trgovine), najpogostejši najprej.
 export async function getProducts(supabase: Supa) {
   const { data } = await supabase
@@ -80,7 +90,7 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
       // vrstni red kot v ListView — loading.tsx iz tega riše takojšnji pogled
       supabase
         .from("cekar_items")
-        .select("list_id, store_id, name, checked, quantity")
+        .select("list_id, store_id, product_id, name, checked, quantity")
         .order("position")
         .order("created_at"),
       getStores(supabase),
@@ -98,8 +108,9 @@ export async function getListSummaries(supabase: Supa): Promise<CekarListSummary
       name: l.name,
       storeNames: storeIds.map((id) => storeName.get(id) ?? ""),
       storeIds,
-      items: own.map(({ store_id, name, checked, quantity }) => ({
+      items: own.map(({ store_id, product_id, name, checked, quantity }) => ({
         store_id,
+        product_id,
         name,
         checked,
         quantity,
@@ -114,7 +125,7 @@ export async function getListDetail(
   supabase: Supa,
   listId: string
 ): Promise<CekarListDetail | null> {
-  const [{ data: list }, { data: listStores }, { data: items }, allStores, products] =
+  const [{ data: list }, { data: listStores }, { data: items }, allStores, products, categories] =
     await Promise.all([
       supabase.from("cekar_lists").select("*").eq("id", listId).maybeSingle(),
       supabase
@@ -131,6 +142,7 @@ export async function getListDetail(
         .order("created_at"),
       getStores(supabase),
       getProducts(supabase),
+      getCategories(supabase),
     ]);
   if (!list) return null;
 
@@ -145,5 +157,6 @@ export async function getListDetail(
     items: items ?? [],
     allStores,
     products,
+    categories,
   };
 }
