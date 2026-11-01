@@ -70,17 +70,18 @@ export default function ListsHome({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold">Nakupovalni seznami</h1>
-          <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+      {/* naslov ima celo vrstico zase (brez preloma), gumb je v vrstici pod njim */}
+      <div className="space-y-1">
+        <h1 className="whitespace-nowrap text-xl font-semibold">Nakupovalni seznami</h1>
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-sm text-gray-500 dark:text-gray-400">
             {householdName}
           </p>
+          <Button onClick={() => setCreating(true)} className="flex-shrink-0">
+            <IconPlus />
+            Nov seznam
+          </Button>
         </div>
-        <Button onClick={() => setCreating(true)} className="flex-shrink-0">
-          <IconPlus />
-          Nov seznam
-        </Button>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -18,17 +18,17 @@ export default function HomePreview() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold">Nakupovalni seznami</h1>
-          <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+      <div className="space-y-1">
+        <h1 className="whitespace-nowrap text-xl font-semibold">Nakupovalni seznami</h1>
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-sm text-gray-500 dark:text-gray-400">
             {cachedHouseholdName()}
           </p>
+          <span className="inline-flex h-9 flex-shrink-0 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white opacity-80">
+            <IconPlus />
+            Nov seznam
+          </span>
         </div>
-        <span className="inline-flex h-9 flex-shrink-0 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white opacity-80">
-          <IconPlus />
-          Nov seznam
-        </span>
       </div>
       {template && (
         <div className="rounded-lg border border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30">
