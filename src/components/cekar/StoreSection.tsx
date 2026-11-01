@@ -5,13 +5,16 @@ import Menu, { MenuItem } from "@/components/ui/Menu";
 import {
   IconCheck,
   IconChevronDown,
+  IconMinus,
   IconPencil,
+  IconPlus,
   IconStore,
   IconTrash,
   IconX,
 } from "@/components/ui/icons";
 import AddItemInput from "@/components/cekar/AddItemInput";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
+import { MAX_QUANTITY } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
 import type { CekarItem, CekarProduct, CekarStore } from "@/lib/types/database.types";
 
@@ -33,6 +36,7 @@ export default function StoreSection({
   onAdd,
   onDelete,
   onEdit,
+  onQuantity,
   onRemoveStore,
 }: {
   listId: string;
@@ -43,6 +47,7 @@ export default function StoreSection({
   onAdd: (name: string, quantity: number) => void;
   onDelete: (item: CekarItem) => void;
   onEdit: (item: CekarItem) => void;
+  onQuantity: (item: CekarItem, quantity: number) => void;
   onRemoveStore: () => void;
 }) {
   const open = items
@@ -157,6 +162,29 @@ export default function StoreSection({
                 </button>
                 {!isTemp(item) && (
                   <>
+                    {/* hitra sprememba količine — oznaka "3×" ob imenu se posodobi takoj (optimistično) */}
+                    {!item.checked && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={`Manj: ${item.name}`}
+                          disabled={item.quantity <= 1}
+                          onClick={() => onQuantity(item, item.quantity - 1)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                        >
+                          <IconMinus />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Več: ${item.name}`}
+                          disabled={item.quantity >= MAX_QUANTITY}
+                          onClick={() => onQuantity(item, item.quantity + 1)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-30 dark:hover:bg-emerald-950 dark:hover:text-emerald-300"
+                        >
+                          <IconPlus />
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       aria-label={`Uredi ${item.name}`}

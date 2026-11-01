@@ -242,6 +242,11 @@ export default function ListView({ detail }: { detail: CekarListDetail }) {
           onAdd={(name, quantity) => onAdd(store.id, name, quantity)}
           onDelete={onDelete}
           onEdit={setEditingItem}
+          onQuantity={(item, quantity) =>
+            run({ type: "edit", id: item.id, name: item.name, quantity }, () =>
+              updateItemAction(item.id, item.name, quantity)
+            )
+          }
           onRemoveStore={() => onRemoveStore(store.id)}
         />
       ))}
