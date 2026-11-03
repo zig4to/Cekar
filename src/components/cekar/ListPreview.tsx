@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { readCollapsed, readNoCategories } from "@/lib/cekar/collapsed";
-import StoreLogo from "@/components/cekar/StoreLogo";
+import StoreLogo, { storeColor } from "@/components/cekar/StoreLogo";
 import QuantityBadge from "@/components/cekar/QuantityBadge";
 import {
   cachedCatalog,
@@ -144,7 +144,19 @@ export default function ListPreview() {
             </header>
             {!collapsed && (
               <>
-                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {/* kot AddItemInput v StoreSection: vnos na vrhu */}
+                <div className="p-2">
+                  <div
+                    className="h-10 rounded-md border"
+                    style={{ borderColor: storeColor(cachedStoreName(storeId)) ?? "#10b981" }}
+                  />
+                </div>
+                <ul
+                  className={clsx(
+                    "divide-y divide-gray-100 dark:divide-gray-800",
+                    rows.length > 0 && "border-t border-gray-100 dark:border-gray-800"
+                  )}
+                >
                   {rows.map(({ header, item }, idx) =>
                     !item ? (
                       <li
@@ -180,9 +192,6 @@ export default function ListPreview() {
                     )
                   )}
                 </ul>
-                <div className="border-t border-gray-100 p-2 dark:border-gray-800">
-                  <div className="h-10 rounded-md border border-gray-200 dark:border-gray-700" />
-                </div>
               </>
             )}
           </section>

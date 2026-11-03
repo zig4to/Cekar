@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { IconPlus } from "@/components/ui/icons";
 import { norm, parseQuantity } from "@/lib/cekar/text";
 import QuantityStepper from "@/components/cekar/QuantityStepper";
+import { storeColor } from "@/components/cekar/StoreLogo";
 import type { CekarProduct } from "@/lib/types/database.types";
 
 const MAX_SUGGESTIONS = 8;
@@ -55,7 +56,7 @@ export default function AddItemInput({
   const showSuggestions = q !== "" && suggestions.length > 0;
 
   return (
-    <div className="border-t border-gray-100 p-2 dark:border-gray-800">
+    <div className="p-2">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -69,7 +70,9 @@ export default function AddItemInput({
           onChange={(e) => setValue(e.target.value)}
           placeholder={`Dodaj v ${storeName} …`}
           enterKeyHint="done"
-          className="min-w-0 flex-1 rounded-md border border-transparent bg-gray-50 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:bg-gray-800 dark:placeholder:text-gray-500"
+          // obroba v barvi trgovine (Lidl rumena, Hofer modra …), sicer zelena
+          style={{ "--trgovina": storeColor(storeName) ?? "#10b981" } as React.CSSProperties}
+          className="min-w-0 flex-1 rounded-md border border-[var(--trgovina)] bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--trgovina)] dark:bg-gray-800 dark:placeholder:text-gray-500"
         />
         <QuantityStepper
           value={parsed.quantity}

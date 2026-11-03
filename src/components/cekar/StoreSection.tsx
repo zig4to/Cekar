@@ -198,7 +198,20 @@ export default function StoreSection({
 
       {!collapsed && (
         <>
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          {/* vnos je vedno na vrhu, takoj pod imenom trgovine */}
+          <AddItemInput
+            storeName={store.name}
+            products={products}
+            exclude={openNames}
+            onAdd={onAdd}
+          />
+
+          <ul
+            className={clsx(
+              "divide-y divide-gray-100 dark:divide-gray-800",
+              rows.length > 0 && "border-t border-gray-100 dark:border-gray-800"
+            )}
+          >
             {rows.map((row) => {
               if (row.type === "header") {
                 return (
@@ -291,13 +304,6 @@ export default function StoreSection({
               );
             })}
           </ul>
-
-          <AddItemInput
-            storeName={store.name}
-            products={products}
-            exclude={openNames}
-            onAdd={onAdd}
-          />
         </>
       )}
     </section>

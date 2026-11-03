@@ -130,6 +130,8 @@ je ikona z Brandfetcha, obrezana na 128 px). Mlekarica, Domača jajca in Domače
 meso imajo lastne SVG v enakem slogu (modro nebo, zelen travnik). Nov logotip
 pred commitom izriši (headless Chrome `--screenshot`) v 96 in 20 px ob ostalih.
 `0013_domace_meso.sql` doda navadno trgovino „Domače meso“.
+Barve trgovin: `storeColor` (`COLORS` v `StoreLogo.tsx`, ista prepoznava po
+imenu) = obroba polja `AddItemInput` (in v `ListPreview`); neznana → zelena.
 
 ## Arhitektura
 
@@ -147,7 +149,8 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   kartice nimajo števca izdelkov. Na telefonu sta stalni seznam in povezava
   „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
   skupina `max-sm:mt-auto`).
-- `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (predlogi: katalog
+- `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu
+  sekcije, takoj pod glavo trgovine — tudi v `ListPreview`; predlogi: katalog
   te trgovine, brez šumnikov/velikih črk, brez izdelkov, ki so že neodkljukani).
   Glava trgovine: logo, ime, € (`SpentButton`), oko (kategorije), kamera/računi,
   števec, meni ⋯ (Uredi izdelke trgovine, Odstrani s seznama — potrditev v
