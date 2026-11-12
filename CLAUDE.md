@@ -28,6 +28,13 @@ npm run build
 
 Testov v projektu ni.
 
+## Commit po vsakem promptu
+
+Ko je naloga iz prompta končana, jo **takoj commitaj** (brez vprašanja), na
+`main`. Commitaj samo datoteke, ki si jih spremenil v tem promptu; začasnih
+datotek (npr. `public/logos/_preview.html`) ne dodajaj. Push samo, če
+uporabnik izrecno reče.
+
 ## Okoljske spremenljivke (`.env.local`)
 
 ```
