@@ -18,6 +18,7 @@ const LOGOS: [RegExp, string][] = [
   [/mlekar/, "/logos/mlekarica.svg"],
   [/jajc/, "/logos/domaca-jajca.svg"],
   [/\bmeso\b|mesnic/, "/logos/domace-meso.svg"],
+  [/sanolabor/, "/logos/sanolabor.svg"],
 ];
 
 // Barve trgovin (iz logotipov) — obroba polja za vnos izdelka. Svetle dovolj,
@@ -36,6 +37,7 @@ const COLORS: [RegExp, string][] = [
   [/mlekar/, "#38bdf8"], // svetlo modra (mleko, nebo)
   [/jajc/, "#d97706"], // jantarna
   [/\bmeso\b|mesnic/, "#c2410c"], // rdečerjava
+  [/sanolabor/, "#b3127f"], // magenta
 ];
 
 export function storeColor(name: string) {
