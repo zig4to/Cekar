@@ -1,6 +1,8 @@
 "use client";
 
+import { Fragment } from "react";
 import { usePathname } from "next/navigation";
+import ReceiptReminder from "@/components/cekar/ReceiptReminder";
 import { IconBook, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import { itemsLabel } from "@/lib/cekar/text";
 import { ListSkeleton } from "@/components/cekar/ListPreview";
@@ -32,8 +34,8 @@ export default function HomePreview() {
       </div>
       <ul className="space-y-2 pt-2">
         {lists.map((l, i) => (
+          <Fragment key={l.id}>
           <li
-            key={l.id}
             className={
               i === 0
                 ? "relative flex items-stretch rounded-lg border border-emerald-400 bg-white ring-1 ring-emerald-400 dark:border-emerald-700 dark:bg-gray-900 dark:ring-emerald-700"
@@ -60,6 +62,8 @@ export default function HomePreview() {
               <IconPlus className="h-5 w-5" />
             </span>
           </li>
+          {i === 0 && <ReceiptReminder />}
+          </Fragment>
         ))}
       </ul>
       {/* kot v ListsHome: na telefonu na dnu zaslona */}

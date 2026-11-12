@@ -153,7 +153,8 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   izdelki, arhiv, katalog trgovine) imajo levo od naslova puščico nazaj.
 - `/` `ListsHome`: najnovejši seznam (`created_at` padajoče, prvi) je večja
   kartica z oznako „Aktualno“ na zgornjem robu (kartica brez `overflow-hidden`);
-  kartice nimajo števca izdelkov. Na telefonu sta stalni seznam in povezava
+  kartice nimajo števca izdelkov. Pod njo `ReceiptReminder` („Prosimo, če
+  slikate račune.“, tudi v `HomePreview`). Na telefonu sta stalni seznam in povezava
   „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
   skupina `max-sm:mt-auto`).
 - `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu

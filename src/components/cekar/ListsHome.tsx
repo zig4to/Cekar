@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Fragment, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
+import ReceiptReminder from "@/components/cekar/ReceiptReminder";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
 import { itemsLabel } from "@/lib/cekar/text";
@@ -109,8 +110,8 @@ export default function ListsHome({
             // njegova kartica nima overflow-hidden, ker oznaka sedi na zgornjem robu
             const current = i === 0;
             return (
+              <Fragment key={l.id}>
               <li
-                key={l.id}
                 className={clsx(
                   "relative flex items-stretch rounded-lg border bg-white hover:border-emerald-400 dark:bg-gray-900 dark:hover:border-emerald-700",
                   current
@@ -151,6 +152,8 @@ export default function ListsHome({
                   <IconPlus className="h-5 w-5" />
                 </button>
               </li>
+              {current && <ReceiptReminder />}
+              </Fragment>
             );
           })}
         </ul>
