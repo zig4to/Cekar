@@ -10,7 +10,7 @@ checklisto. **Vsak izdelek je vezan na trgovino**: ob dodajanju v npr. Lidl se
 pod poljem pokažejo predlogi izdelkov, ki so bili v Lidl že kdaj dodani.
 Seznami so deljeni prek **gospodinjstva** (člani se pridružijo s kodo).
 
-Ogrodje je kopija aplikacije **Vzlet** (prijava, SSO iz huba TomsStudios, tema,
+Ogrodje je kopija aplikacije **Vzlet** (prijava, SSO iz huba Bitneverse, tema,
 PWA/service worker, UI primitivi) — isti Supabase projekt kot Pisi/Posel/Vzlet,
 tabele imajo predpono `cekar_`.
 
