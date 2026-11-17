@@ -312,14 +312,14 @@ function PeriodSection({
                   >
                     {isOpen ? <IconChevronDown /> : <IconChevronRight />}
                     <span className="min-w-0 flex-1">
-                      <span className="block font-medium capitalize">{kind.label(p.key)}</span>
+                      <span className="block text-sm font-medium capitalize">{kind.label(p.key)}</span>
                       {kind.showLists && p.lists.length > 0 && (
                         <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
                           {p.lists.join(", ")}
                         </span>
                       )}
                     </span>
-                    <span className="font-semibold tabular-nums">{formatEur(p.total)}</span>
+                    <span className="text-sm font-semibold tabular-nums">{formatEur(p.total)}</span>
                   </button>
                   {isOpen && (
                     <ul className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-800 dark:border-gray-800">

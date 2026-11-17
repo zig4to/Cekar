@@ -326,7 +326,7 @@ export async function getSpentByPeriod(
   const [{ data: rows }, stores] = await Promise.all([
     supabase
       .from("cekar_list_stores")
-      .select("store_id, spent, spent_at, cekar_lists(name)")
+      .select("list_id, store_id, spent, spent_at, cekar_lists(name)")
       .not("spent", "is", null)
       .order("spent_at"),
     getStores(supabase),
@@ -335,18 +335,42 @@ export async function getSpentByPeriod(
   type Group = { perStore: Map<string, number>; lists: string[] };
   const months = new Map<string, Group>();
   const weeks = new Map<string, Group>();
-  const add = (into: Map<string, Group>, key: string, storeId: string, v: number, list: string) => {
+  // Nakup (seznam) je označen samo v enem obdobju — v tistem, kamor pade največ
+  // njegovega zneska (npr. znesek, popravljen teden pozneje, ga ne podvoji).
+  const listShare = { months: new Map<string, Map<string, number>>(), weeks: new Map<string, Map<string, number>>() };
+  const listName = new Map<string, string>();
+  const add = (into: Map<string, Group>, key: string, storeId: string, v: number) => {
     const g = into.get(key) ?? { perStore: new Map<string, number>(), lists: [] };
     g.perStore.set(storeId, (g.perStore.get(storeId) ?? 0) + v);
-    if (list && !g.lists.includes(list)) g.lists.push(list);
     into.set(key, g);
+  };
+  const share = (into: Map<string, Map<string, number>>, listId: string, key: string, v: number) => {
+    const perKey = into.get(listId) ?? new Map<string, number>();
+    perKey.set(key, (perKey.get(key) ?? 0) + v);
+    into.set(listId, perKey);
   };
   for (const r of rows ?? []) {
     if (!byId.has(r.store_id) || r.spent === null || !r.spent_at) continue;
     const at = new Date(r.spent_at);
-    const list = (r.cekar_lists as unknown as { name: string } | null)?.name ?? "";
-    add(months, monthKey(at), r.store_id, Number(r.spent), list);
-    add(weeks, weekKey(at), r.store_id, Number(r.spent), list);
+    const v = Number(r.spent);
+    const name = (r.cekar_lists as unknown as { name: string } | null)?.name;
+    if (name) listName.set(r.list_id, name);
+    add(months, monthKey(at), r.store_id, v);
+    add(weeks, weekKey(at), r.store_id, v);
+    share(listShare.months, r.list_id, monthKey(at), v);
+    share(listShare.weeks, r.list_id, weekKey(at), v);
+  }
+  // vrstice so po spent_at, zato so seznami v obdobju v vrstnem redu nakupov
+  for (const [groups, shares] of [
+    [months, listShare.months],
+    [weeks, listShare.weeks],
+  ] as const) {
+    for (const [listId, perKey] of shares) {
+      const name = listName.get(listId);
+      if (!name) continue;
+      const main = [...perKey].reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+      groups.get(main)?.lists.push(name);
+    }
   }
   const toList = (groups: Map<string, Group>) =>
     [...groups]
