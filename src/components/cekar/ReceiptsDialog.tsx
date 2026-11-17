@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { IconFile, IconTrash, IconX } from "@/components/ui/icons";
 import { deleteReceiptAction } from "@/actions/cekar";
 import { receiptUrls } from "@/lib/cekar/receipts";
+import { useBackToClose } from "@/lib/cekar/useBackToClose";
 import type { CekarReceipt } from "@/lib/types/database.types";
 
 // Celozaslonski ogled računov ene trgovine na seznamu. Bucket je zaseben, zato
@@ -20,6 +21,8 @@ export default function ReceiptsDialog({
   storeName: string;
   receipts: CekarReceipt[];
 }) {
+  // sistemski nazaj zapre pregled in ostane na seznamu (X / Esc gresta prek close)
+  const close = useBackToClose(open, onClose);
   const [urls, setUrls] = useState<Map<string, string>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -47,7 +50,7 @@ export default function ReceiptsDialog({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     document.addEventListener("keydown", onKey);
     // pod celozaslonskim pogledom se stran ne premika
     const overflow = document.body.style.overflow;
@@ -56,7 +59,8 @@ export default function ReceiptsDialog({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
     };
-  }, [open, onClose]);
+  }, [open, close]);
+
 
   if (!open || typeof document === "undefined") return null;
 
@@ -74,7 +78,7 @@ export default function ReceiptsDialog({
         <button
           type="button"
           aria-label="Zapri"
-          onClick={onClose}
+          onClick={close}
           className="rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white"
         >
           <IconX className="h-6 w-6" />
