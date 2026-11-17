@@ -53,7 +53,7 @@ Supabase MCP ni na voljo; migracijo lahko poženeš prek Claude in Chrome v SQL
 Editorju projekta **ProjektiBaze** (`abjnxhfxjolwwxlckkje`, URL
 `supabase.com/dashboard/project/abjnxhfxjolwwxlckkje/sql/new`). Vpiši SQL kot
 eno vrstico (Monaco samodejno zapira oklepaje) in raje `if not exists` /
-`on conflict do nothing`. Izvedene so vse do vključno `0013`.
+`on conflict do nothing`. Izvedene so vse do vključno `0014`.
 
 Tabele (`0001_init.sql`):
 - `cekar_households` (`invite_code`), `cekar_members` (PK `user_id` → en
@@ -80,7 +80,8 @@ trgovino dodaš na seznam, `addStoreToListAction` te izdelke doda sam
 
 `0009_receipts.sql`: `cekar_receipts` + zasebni bucket **`cekar-racuni`** (pot
 `<household_id>/<list_id>/<uuid>.jpg`, storage politike samo za mapo lastnega
-gospodinjstva). V glavi trgovine `ReceiptButtons`: kamera (`capture="environment"`)
+gospodinjstva). V glavi trgovine `ReceiptButtons`: sponka → celozaslonska izbira
+Kamera (`capture="environment"`) / Galerija / Datoteka (tudi PDF, `0014_receipt_pdf.sql`)
 → `uploadReceipt` (`src/lib/cekar/receipts.ts`, pomanjša na 1800 px JPEG, nalaga
 naravnost iz brskalnika — mimo omejitve velikosti server action) →
 `addReceiptAction`; ikona računa odpre `ReceiptsDialog` (začasne povezave,
@@ -163,7 +164,7 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu
   sekcije, takoj pod glavo trgovine — tudi v `ListPreview`; predlogi: katalog
   te trgovine, brez šumnikov/velikih črk, brez izdelkov, ki so že neodkljukani).
-  Glava trgovine: logo, ime, € (`SpentButton`), kamera/računi,
+  Glava trgovine: logo, ime, € (`SpentButton`), sponka/računi,
   števec, meni ⋯ (Uredi izdelke trgovine, Odstrani s seznama — potrditev v
   meniju, ne `window.confirm`; na dnu Skrij/Pokaži kategorije). Na telefonu je glava višja, logo in ime večja.
 - Arhiv: „Nakup opravljen“ pod „Dodaj trgovino“ (`FinishShopping` v `ListView`,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Modal from "@/components/ui/Modal";
-import { IconTrash } from "@/components/ui/icons";
+import { IconFile, IconTrash } from "@/components/ui/icons";
 import { deleteReceiptAction } from "@/actions/cekar";
 import { receiptUrls } from "@/lib/cekar/receipts";
 import type { CekarReceipt } from "@/lib/types/database.types";
@@ -61,8 +61,15 @@ export default function ReceiptsDialog({
               >
                 {url ? (
                   <a href={url} target="_blank" rel="noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- začasna povezava iz Storage */}
-                    <img src={url} alt="Račun" className="h-40 w-full bg-gray-50 object-cover dark:bg-gray-800" />
+                    {r.path.toLowerCase().endsWith(".pdf") ? (
+                      <span className="flex h-40 w-full flex-col items-center justify-center gap-2 bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        <IconFile className="h-10 w-10" />
+                        <span className="text-xs font-semibold">PDF</span>
+                      </span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- začasna povezava iz Storage
+                      <img src={url} alt="Račun" className="h-40 w-full bg-gray-50 object-cover dark:bg-gray-800" />
+                    )}
                   </a>
                 ) : (
                   <div className="h-40 animate-pulse bg-gray-100 dark:bg-gray-800" />

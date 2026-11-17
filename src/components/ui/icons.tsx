@@ -25,6 +25,19 @@ export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
   </Base>
 );
 
+export const IconPaperclip = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />
+  </Base>
+);
+
+export const IconFile = (p: SVGProps<SVGSVGElement>) => (
+  <Base {...p}>
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+  </Base>
+);
+
 export const IconCamera = (p: SVGProps<SVGSVGElement>) => (
   <Base {...p}>
     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
