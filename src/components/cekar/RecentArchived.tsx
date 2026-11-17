@@ -2,7 +2,7 @@ import Link from "next/link";
 import { IconBook, IconChevronRight } from "@/components/ui/icons";
 
 // Zadnji opravljeni nakupi pod kartico Aktualno: nizke kartice samo z imenom,
-// klik odpre arhiviran seznam. Uporabljata ListsHome in HomePreview (static =
+// klik odpre arhiv (/arhiv#nakup-<id>, kartica označena). Uporabljata ListsHome in HomePreview (static =
 // brez povezav, enaka višina), da stran ob nalaganju ne skoči.
 export default function RecentArchived({
   lists,
@@ -27,7 +27,7 @@ export default function RecentArchived({
           <div className={row}>{content}</div>
         ) : (
           <Link
-            href={`/seznam/${l.id}`}
+            href={`/arhiv#nakup-${l.id}`}
             className={`${row} hover:border-emerald-400 dark:hover:border-emerald-700`}
           >
             {content}

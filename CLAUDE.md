@@ -159,7 +159,7 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   kartice nimajo števca izdelkov. Pod njo vedno črta
   (`HomeDivider`), ostali
   aktivni seznami in na koncu `RecentArchived` — nizke kartice samo z imenom treh
-  zadnjih opravljenih nakupov (`getRecentArchived`, odprejo arhiviran seznam). Na telefonu sta stalni seznam in povezava
+  zadnjih opravljenih nakupov (`getRecentArchived`; odprejo `/arhiv#nakup-<id>`, kjer `ArchiveList` ta nakup označi in pokaže). Na telefonu sta stalni seznam in povezava
   „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
   skupina `max-sm:mt-auto`).
 - Ime novega seznama predlaga `getNewListName` („Trgovina November #3“ = seznami,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { IconArrowLeft, IconChevronRight, IconRepeat } from "@/components/ui/icons";
 import { moveOpenItemsToNewListAction } from "@/actions/cekar";
@@ -24,6 +24,17 @@ const dateLabel = (iso: string) =>
 // nakupa z gumboma za znesek (€) in račun (kamera) — tudi po nakupu, brez
 // odpiranja seznama. Klik na glavo odpre seznam (tam "Vrni med sezname").
 export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
+  // Odprt z domače strani (/arhiv#nakup-<id>): nakup označi in ga pokaži.
+  // :target ob navigaciji v Next.js (pushState) ne deluje, zato prek hash.
+  const [focused, setFocused] = useState<string | null>(null);
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#nakup-/, "");
+    if (!id || id === window.location.hash) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hash je znan šele v brskalniku
+    setFocused(id);
+    document.getElementById(`nakup-${id}`)?.scrollIntoView({ block: "start" });
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -51,7 +62,7 @@ export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
       ) : (
         <ul className="space-y-3">
           {lists.map((l) => (
-            <ArchiveCard key={l.id} list={l} />
+            <ArchiveCard key={l.id} list={l} focused={focused === l.id} />
           ))}
         </ul>
       )}
@@ -59,7 +70,7 @@ export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
   );
 }
 
-function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
+function ArchiveCard({ list: l, focused }: { list: CekarArchivedList; focused: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const movable = l.stores.filter(
     (s) => s.openItems.length > 0 && !(s.store.single_item && s.store.unit_price !== null)
@@ -68,7 +79,16 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
   const openTotal = movable.reduce((sum, s) => sum + s.openItems.length, 0);
 
   return (
-    <li className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <li
+      id={`nakup-${l.id}`}
+      // odprt z domače strani (/arhiv#nakup-<id>): označen in ne pod zgornjo vrstico
+      className={clsx(
+        "scroll-mt-20 overflow-hidden rounded-lg border bg-white dark:bg-gray-900",
+        focused
+          ? "border-emerald-400 ring-2 ring-emerald-400 dark:border-emerald-700 dark:ring-emerald-700"
+          : "border-gray-200 dark:border-gray-800"
+      )}
+    >
       <Link
         href={`/seznam/${l.id}`}
         className="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
