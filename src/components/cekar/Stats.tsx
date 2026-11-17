@@ -58,7 +58,7 @@ function weekLabel(key: string) {
 
 const WEEKS = {
   sparse: true, // na telefonu je oznaka "16.11." preširoka za vsak stolpec
-  showLists: true, // pod grafom: kateri nakup (seznam) je v katerem tednu
+  showLists: true, // v stolpcu: kateri nakup (seznam) je v tem tednu
   shift: shiftWeek,
   label: weekLabel,
   short: (key: string) => {
@@ -66,6 +66,10 @@ const WEEKS = {
     return `${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
   },
 };
+
+// Kratko ime nakupa za stolpec: "Trgovina November #1" → "November 1".
+const barName = (name: string) =>
+  name.replace(/trgovina/gi, "").replace(/#/g, "").replace(/s+/g, " ").trim() || name;
 
 type PeriodKind = typeof MONTHS | typeof WEEKS;
 
@@ -261,7 +265,16 @@ function PeriodSection({
                           height:
                             max > 0 && c.total > 0 ? `max(${(c.total / max) * 100}%, 2px)` : 0,
                         }}
-                      />
+                      >
+                        {/* ime nakupa navpično v stolpcu (od spodaj navzgor) */}
+                        {kind.showLists && c.lists.length > 0 && (
+                          <span className="flex h-full w-full rotate-180 items-center justify-end overflow-hidden px-0.5 pt-1 [writing-mode:vertical-rl]">
+                            <span className="truncate text-[10px] font-medium leading-none text-white dark:text-gray-900">
+                              {c.lists.map(barName).join(", ")}
+                            </span>
+                          </span>
+                        )}
+                      </span>
                     </button>
                   );
                 })}
@@ -281,39 +294,6 @@ function PeriodSection({
                 ))}
               </div>
             </div>
-            {/* legenda: stolpec (teden) → nakup(i) s tem imenom, kot so poimenovani */}
-            {kind.showLists && chart.some((c) => c.total > 0) && (
-              <ul className="mt-3 space-y-1">
-                {chart
-                  .filter((c) => c.total > 0)
-                  .map((c) => (
-                    <li
-                      key={c.key}
-                      onMouseEnter={() => setHover(c.key)}
-                      onMouseLeave={() => setHover(null)}
-                      className={clsx(
-                        "flex items-baseline gap-2 rounded px-1.5 py-1 text-sm",
-                        hover === c.key && "bg-emerald-50 dark:bg-emerald-950/40"
-                      )}
-                    >
-                      <span
-                        className={clsx(
-                          "w-12 flex-shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400",
-                          c.key === current && "font-semibold text-gray-800 dark:text-gray-200"
-                        )}
-                      >
-                        {kind.short(c.key)}
-                      </span>
-                      <span className="min-w-0 flex-1 break-words">
-                        {c.lists.length ? c.lists.join(", ") : "—"}
-                      </span>
-                      <span className="flex-shrink-0 tabular-nums text-gray-700 dark:text-gray-300">
-                        {formatEur(c.total)}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            )}
           </div>
 
           <div className="space-y-2">

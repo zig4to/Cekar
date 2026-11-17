@@ -94,7 +94,7 @@ znesek, dialog (`parseAmount` sprejme „23,45“, prazno pobriše) →
 `0011_spent_at.sql`: `spent_at` (trigger ob prvem vnosu; popravek ga ne premakne)
 → `/statistika` (`Stats`, ikona v zgornji vrstici): ta mesec in ta teden, nato
 zložljiva razdelka Po mesecih / Po tednih (stolpci zadnjih 12 obdobij, obdobja po
-trgovinah; pri tednih legenda pod grafom z imeni seznamov). Združevanje `getSpentByPeriod` po
+trgovinah; pri tednih v stolpcu navpično kratko ime nakupa, `barName`: „November 1“). Združevanje `getSpentByPeriod` po
 ljubljanskem času (`monthKey`, `weekKey` = ponedeljek), tekoči mesec in teden prideta s strežnika.
 
 `0008_single_item_stores.sql`: `cekar_stores.single_item` — trgovina z enim
