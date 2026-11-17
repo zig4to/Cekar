@@ -154,9 +154,6 @@ export default function StoreSection({
         {!template && receiptProps && (
           <ReceiptButtons store={store} {...receiptProps} />
         )}
-        <span className="px-1 text-xs text-gray-500 dark:text-gray-400">
-          {template ? items.length : `${checked.length}/${items.length}`}
-        </span>
         <Menu label={`Možnosti za ${store.name}`}>
           {(close) => (
             <>

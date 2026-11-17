@@ -138,9 +138,6 @@ export default function ListPreview() {
               <h2 className="min-w-0 flex-1 truncate text-lg font-semibold sm:text-base">
                 {cachedStoreName(storeId)}
               </h2>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {items.filter((i) => i.checked).length}/{items.length}
-              </span>
             </header>
             {!collapsed && (
               <>
