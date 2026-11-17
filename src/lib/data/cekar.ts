@@ -326,31 +326,35 @@ export async function getSpentByPeriod(
   const [{ data: rows }, stores] = await Promise.all([
     supabase
       .from("cekar_list_stores")
-      .select("store_id, spent, spent_at")
-      .not("spent", "is", null),
+      .select("store_id, spent, spent_at, cekar_lists(name)")
+      .not("spent", "is", null)
+      .order("spent_at"),
     getStores(supabase),
   ]);
   const byId = new Map(stores.map((s) => [s.id, s]));
-  const months = new Map<string, Map<string, number>>();
-  const weeks = new Map<string, Map<string, number>>();
-  const add = (into: Map<string, Map<string, number>>, key: string, storeId: string, v: number) => {
-    const perStore = into.get(key) ?? new Map<string, number>();
-    perStore.set(storeId, (perStore.get(storeId) ?? 0) + v);
-    into.set(key, perStore);
+  type Group = { perStore: Map<string, number>; lists: string[] };
+  const months = new Map<string, Group>();
+  const weeks = new Map<string, Group>();
+  const add = (into: Map<string, Group>, key: string, storeId: string, v: number, list: string) => {
+    const g = into.get(key) ?? { perStore: new Map<string, number>(), lists: [] };
+    g.perStore.set(storeId, (g.perStore.get(storeId) ?? 0) + v);
+    if (list && !g.lists.includes(list)) g.lists.push(list);
+    into.set(key, g);
   };
   for (const r of rows ?? []) {
     if (!byId.has(r.store_id) || r.spent === null || !r.spent_at) continue;
     const at = new Date(r.spent_at);
-    add(months, monthKey(at), r.store_id, Number(r.spent));
-    add(weeks, weekKey(at), r.store_id, Number(r.spent));
+    const list = (r.cekar_lists as unknown as { name: string } | null)?.name ?? "";
+    add(months, monthKey(at), r.store_id, Number(r.spent), list);
+    add(weeks, weekKey(at), r.store_id, Number(r.spent), list);
   }
-  const toList = (groups: Map<string, Map<string, number>>) =>
+  const toList = (groups: Map<string, Group>) =>
     [...groups]
-      .map(([key, perStore]) => {
+      .map(([key, { perStore, lists }]) => {
         const list = [...perStore]
           .map(([id, total]) => ({ store: byId.get(id)!, total }))
           .sort((a, b) => b.total - a.total);
-        return { key, total: list.reduce((a, s) => a + s.total, 0), stores: list };
+        return { key, total: list.reduce((a, s) => a + s.total, 0), stores: list, lists };
       })
       .sort((a, b) => b.key.localeCompare(a.key));
   return { months: toList(months), weeks: toList(weeks) };

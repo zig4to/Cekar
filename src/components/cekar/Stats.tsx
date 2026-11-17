@@ -27,6 +27,7 @@ function shiftMonth(key: string, n: number) {
 
 const MONTHS = {
   sparse: false,
+  showLists: false,
   shift: shiftMonth,
   label: (key: string) => monthName(key),
   short: (key: string) => monthName(key, "short").replace(".", ""),
@@ -57,6 +58,7 @@ function weekLabel(key: string) {
 
 const WEEKS = {
   sparse: true, // na telefonu je oznaka "16.11." preširoka za vsak stolpec
+  showLists: true, // pod grafom: kateri nakup (seznam) je v katerem tednu
   shift: shiftWeek,
   label: weekLabel,
   short: (key: string) => {
@@ -195,7 +197,8 @@ function PeriodSection({
   const byKey = new Map(periods.map((p) => [p.key, p]));
   const chart = Array.from({ length: CHART_BARS }, (_, i) => {
     const key = kind.shift(current, CHART_BARS - 1 - i);
-    return { key, total: byKey.get(key)?.total ?? 0 };
+    const p = byKey.get(key);
+    return { key, total: p?.total ?? 0, lists: p?.lists ?? [] };
   });
   const max = Math.max(...chart.map((c) => c.total));
 
@@ -241,6 +244,9 @@ function PeriodSection({
                         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white shadow dark:bg-gray-100 dark:text-gray-900">
                           {kind.label(c.key)} ·{" "}
                           <span className="font-semibold">{formatEur(c.total)}</span>
+                          {kind.showLists && c.lists.length > 0 && (
+                            <span className="block opacity-80">{c.lists.join(", ")}</span>
+                          )}
                         </span>
                       )}
                       <span
@@ -275,6 +281,39 @@ function PeriodSection({
                 ))}
               </div>
             </div>
+            {/* legenda: stolpec (teden) → nakup(i) s tem imenom, kot so poimenovani */}
+            {kind.showLists && chart.some((c) => c.total > 0) && (
+              <ul className="mt-3 space-y-1">
+                {chart
+                  .filter((c) => c.total > 0)
+                  .map((c) => (
+                    <li
+                      key={c.key}
+                      onMouseEnter={() => setHover(c.key)}
+                      onMouseLeave={() => setHover(null)}
+                      className={clsx(
+                        "flex items-baseline gap-2 rounded px-1.5 py-1 text-sm",
+                        hover === c.key && "bg-emerald-50 dark:bg-emerald-950/40"
+                      )}
+                    >
+                      <span
+                        className={clsx(
+                          "w-12 flex-shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400",
+                          c.key === current && "font-semibold text-gray-800 dark:text-gray-200"
+                        )}
+                      >
+                        {kind.short(c.key)}
+                      </span>
+                      <span className="min-w-0 flex-1 break-words">
+                        {c.lists.length ? c.lists.join(", ") : "—"}
+                      </span>
+                      <span className="flex-shrink-0 tabular-nums text-gray-700 dark:text-gray-300">
+                        {formatEur(c.total)}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -292,7 +331,14 @@ function PeriodSection({
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60"
                   >
                     {isOpen ? <IconChevronDown /> : <IconChevronRight />}
-                    <span className="flex-1 font-medium capitalize">{kind.label(p.key)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium capitalize">{kind.label(p.key)}</span>
+                      {kind.showLists && p.lists.length > 0 && (
+                        <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                          {p.lists.join(", ")}
+                        </span>
+                      )}
+                    </span>
                     <span className="font-semibold tabular-nums">{formatEur(p.total)}</span>
                   </button>
                   {isOpen && (

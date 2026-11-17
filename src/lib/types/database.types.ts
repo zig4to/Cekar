@@ -197,4 +197,5 @@ export type CekarSpentPeriod = {
   key: string;
   total: number;
   stores: { store: CekarStore; total: number }[]; // padajoče po znesku
+  lists: string[]; // imena nakupovalnih seznamov v obdobju (po času vnosa)
 };
