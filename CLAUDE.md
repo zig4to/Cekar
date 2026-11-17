@@ -178,7 +178,7 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   (ista akcija s `storeId` null → vse te trgovine na en nov seznam). Klik
   najprej pokaže predogled izdelkov (po trgovinah, `openItems` iz
   `getArchivedLists`), šele nato Prenesi / Prekliči. Arhiviran seznam ima pas
-  „Vrni med sezname“, nazaj vodi na `/arhiv` in ne gre v predpomnilnik domače strani.
+  „Vrni med sezname“ na dnu strani (pod „Dodaj trgovino“), nazaj vodi na `/arhiv` in ne gre v predpomnilnik domače strani.
 - `/izdelki` `ProductsCatalog` — skupni seznam izdelkov: vrstice
   `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri njem =
   vrstice. Dodaš trgovino → nova vrstica (`use_count` 0), zato se izdelek

@@ -295,32 +295,6 @@ export default function ListView({
         </Button>
       )}
 
-      {archived && (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
-          <p className="min-w-0 flex-1 text-amber-900 dark:text-amber-200">
-            Nakup opravljen{" "}
-            {new Date(list.archived_at!).toLocaleDateString("sl-SI", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}{" "}
-            · seznam je v arhivu.
-          </p>
-          <Button
-            variant="secondary"
-            className="flex-shrink-0"
-            onClick={() =>
-              startTransition(async () => {
-                const res = await unarchiveListAction(list.id);
-                if (res.error) setError(res.error);
-              })
-            }
-          >
-            Vrni med sezname
-          </Button>
-        </div>
-      )}
-
       {!isTemplate && total > 0 && (
         <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
           <div
@@ -394,6 +368,33 @@ export default function ListView({
 
       {/* nakup opravljen → potrditev v istem mestu → seznam v arhiv */}
       {!isTemplate && !archived && <FinishShopping listId={list.id} />}
+
+      {/* arhiviran seznam: pas na dnu strani (kjer je bil „Nakup opravljen“) */}
+      {archived && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="min-w-0 flex-1 text-amber-900 dark:text-amber-200">
+            Nakup opravljen{" "}
+            {new Date(list.archived_at!).toLocaleDateString("sl-SI", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            · seznam je v arhivu.
+          </p>
+          <Button
+            variant="secondary"
+            className="flex-shrink-0"
+            onClick={() =>
+              startTransition(async () => {
+                const res = await unarchiveListAction(list.id);
+                if (res.error) setError(res.error);
+              })
+            }
+          >
+            Vrni med sezname
+          </Button>
+        </div>
+      )}
 
       <button
         type="button"
