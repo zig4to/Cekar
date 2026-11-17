@@ -192,8 +192,9 @@ export type CekarListDetail = {
 };
 
 // Statistika: zapravljeno po mesecih (mesec = "2026-11", čas Europe/Ljubljana).
-export type CekarSpentMonth = {
-  month: string;
+// Zapravljeno v obdobju: mesec ("2026-11") ali teden (ponedeljek "2026-11-16").
+export type CekarSpentPeriod = {
+  key: string;
   total: number;
   stores: { store: CekarStore; total: number }[]; // padajoče po znesku
 };

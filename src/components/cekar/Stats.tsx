@@ -6,9 +6,11 @@ import StoreLogo from "@/components/cekar/StoreLogo";
 import { IconArrowLeft, IconChevronDown, IconChevronRight } from "@/components/ui/icons";
 import { formatEur } from "@/lib/cekar/text";
 import clsx from "@/lib/utils/clsx";
-import type { CekarSpentMonth } from "@/lib/types/database.types";
+import type { CekarSpentPeriod } from "@/lib/types/database.types";
 
-const CHART_MONTHS = 12;
+const CHART_BARS = 12;
+
+// ===== Meseci ("2026-11") =====
 
 const monthName = (key: string, month: "long" | "short" = "long") =>
   new Date(`${key}-01T12:00:00`).toLocaleDateString("sl-SI", {
@@ -16,38 +18,70 @@ const monthName = (key: string, month: "long" | "short" = "long") =>
     ...(month === "long" ? { year: "numeric" } : {}),
   });
 
-// Ključ meseca ("2026-11") n mesecev pred danim.
+// Ključ meseca n mesecev pred danim.
 function shiftMonth(key: string, n: number) {
   const [y, m] = key.split("-").map(Number);
   const d = new Date(y, m - 1 - n, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// Zapravljeno po mesecih: ta mesec (+ primerjava s prejšnjim), stolpci zadnjih
-// 12 mesecev in seznam vseh mesecev z razčlenitvijo po trgovinah.
-// current = tekoči mesec po ljubljanskem času (s strežnika, da se SSR in
-// brskalnik ujemata).
+const MONTHS = {
+  sparse: false,
+  shift: shiftMonth,
+  label: (key: string) => monthName(key),
+  short: (key: string) => monthName(key, "short").replace(".", ""),
+};
+
+// ===== Tedni (ponedeljek "2026-11-16") =====
+
+const weekStart = (key: string) => new Date(`${key}T12:00:00Z`);
+
+// Ključ tedna n tednov pred danim.
+function shiftWeek(key: string, n: number) {
+  const d = weekStart(key);
+  d.setUTCDate(d.getUTCDate() - 7 * n);
+  return d.toISOString().slice(0, 10);
+}
+
+// "16.–22. november 2026" ali "27. oktober – 2. november 2026"
+function weekLabel(key: string) {
+  const from = weekStart(key);
+  const to = weekStart(shiftWeek(key, -1));
+  to.setUTCDate(to.getUTCDate() - 1);
+  const month = (d: Date) => d.toLocaleDateString("sl-SI", { month: "long", timeZone: "UTC" });
+  const year = to.getUTCFullYear();
+  return from.getUTCMonth() === to.getUTCMonth()
+    ? `${from.getUTCDate()}.–${to.getUTCDate()}. ${month(to)} ${year}`
+    : `${from.getUTCDate()}. ${month(from)} – ${to.getUTCDate()}. ${month(to)} ${year}`;
+}
+
+const WEEKS = {
+  sparse: true, // na telefonu je oznaka "16.11." preširoka za vsak stolpec
+  shift: shiftWeek,
+  label: weekLabel,
+  short: (key: string) => {
+    const d = weekStart(key);
+    return `${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+  },
+};
+
+type PeriodKind = typeof MONTHS | typeof WEEKS;
+
+// Zapravljeno: ta mesec in ta teden (+ primerjava s prejšnjim), nato zložljiva
+// razdelka Po mesecih / Po tednih — vsak s stolpci zadnjih 12 obdobij in
+// seznamom obdobij z razčlenitvijo po trgovinah. Tekoči mesec in teden prideta
+// s strežnika (ljubljanski čas), da se SSR in brskalnik ujemata.
 export default function Stats({
   months,
-  current,
+  weeks,
+  currentMonth,
+  currentWeek,
 }: {
-  months: CekarSpentMonth[];
-  current: string;
+  months: CekarSpentPeriod[];
+  weeks: CekarSpentPeriod[];
+  currentMonth: string;
+  currentWeek: string;
 }) {
-  const byMonth = new Map(months.map((m) => [m.month, m]));
-  const thisTotal = byMonth.get(current)?.total ?? 0;
-  const prevTotal = byMonth.get(shiftMonth(current, 1))?.total ?? 0;
-
-  const chart = Array.from({ length: CHART_MONTHS }, (_, i) => {
-    const key = shiftMonth(current, CHART_MONTHS - 1 - i);
-    return { key, total: byMonth.get(key)?.total ?? 0 };
-  });
-  const max = Math.max(...chart.map((c) => c.total));
-  const [hover, setHover] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(months[0]?.month ?? null);
-
-  const diff = thisTotal - prevTotal;
-
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
@@ -61,19 +95,22 @@ export default function Stats({
         <h1 className="text-xl font-semibold">Statistika</h1>
       </div>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Ta mesec · {monthName(current)}
-        </p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">{formatEur(thisTotal)}</p>
-        {prevTotal > 0 && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {diff === 0
-              ? "Enako kot prejšnji mesec"
-              : `${diff > 0 ? "+" : "−"}${formatEur(Math.abs(diff))} glede na prejšnji mesec (${formatEur(prevTotal)})`}
-          </p>
-        )}
-      </section>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <CurrentCard
+          title={`Ta mesec · ${monthName(currentMonth)}`}
+          periods={months}
+          current={currentMonth}
+          prevKey={shiftMonth(currentMonth, 1)}
+          prevLabel="prejšnji mesec"
+        />
+        <CurrentCard
+          title={`Ta teden · ${weekLabel(currentWeek)}`}
+          periods={weeks}
+          current={currentWeek}
+          prevKey={shiftWeek(currentWeek, 1)}
+          prevLabel="prejšnji teden"
+        />
+      </div>
 
       {months.length === 0 ? (
         <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
@@ -82,10 +119,105 @@ export default function Stats({
         </p>
       ) : (
         <>
-          <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Zadnjih 12 mesecev
-            </h2>
+          <PeriodSection
+            title="Po mesecih"
+            chartTitle="Zadnjih 12 mesecev"
+            periods={months}
+            current={currentMonth}
+            kind={MONTHS}
+            defaultOpen
+          />
+          <PeriodSection
+            title="Po tednih"
+            chartTitle="Zadnjih 12 tednov"
+            periods={weeks}
+            current={currentWeek}
+            kind={WEEKS}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function CurrentCard({
+  title,
+  periods,
+  current,
+  prevKey,
+  prevLabel,
+}: {
+  title: string;
+  periods: CekarSpentPeriod[];
+  current: string;
+  prevKey: string;
+  prevLabel: string;
+}) {
+  const total = periods.find((p) => p.key === current)?.total ?? 0;
+  const prev = periods.find((p) => p.key === prevKey)?.total ?? 0;
+  const diff = total - prev;
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+      <p className="mt-1 text-3xl font-semibold tabular-nums">{formatEur(total)}</p>
+      {prev > 0 && (
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {diff === 0
+            ? `Enako kot ${prevLabel}`
+            : `${diff > 0 ? "+" : "−"}${formatEur(Math.abs(diff))} glede na ${prevLabel} (${formatEur(prev)})`}
+        </p>
+      )}
+    </section>
+  );
+}
+
+// Zložljiv razdelek: stolpci zadnjih 12 obdobij + seznam obdobij (vsako se
+// razširi v zneske po trgovinah). Klik na stolpec razširi to obdobje.
+function PeriodSection({
+  title,
+  chartTitle,
+  periods,
+  current,
+  kind,
+  defaultOpen = false,
+}: {
+  title: string;
+  chartTitle: string;
+  periods: CekarSpentPeriod[];
+  current: string;
+  kind: PeriodKind;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [hover, setHover] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(periods[0]?.key ?? null);
+
+  const byKey = new Map(periods.map((p) => [p.key, p]));
+  const chart = Array.from({ length: CHART_BARS }, (_, i) => {
+    const key = kind.shift(current, CHART_BARS - 1 - i);
+    return { key, total: byKey.get(key)?.total ?? 0 };
+  });
+  const max = Math.max(...chart.map((c) => c.total));
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60"
+      >
+        {open ? <IconChevronDown /> : <IconChevronRight />}
+        <h2 className="flex-1 font-semibold">{title}</h2>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{periods.length}</span>
+      </button>
+
+      {open && (
+        <div className="space-y-4 border-t border-gray-100 p-4 dark:border-gray-800">
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {chartTitle}
+            </h3>
             <div className="relative">
               <div className="flex h-40 items-end gap-1 border-b border-gray-200 dark:border-gray-700">
                 {chart.map((c) => {
@@ -94,20 +226,21 @@ export default function Stats({
                     <button
                       key={c.key}
                       type="button"
-                      aria-label={`${monthName(c.key)}: ${formatEur(c.total)}`}
+                      aria-label={`${kind.label(c.key)}: ${formatEur(c.total)}`}
                       onMouseEnter={() => setHover(c.key)}
                       onMouseLeave={() => setHover(null)}
                       onFocus={() => setHover(c.key)}
                       onBlur={() => setHover(null)}
                       onClick={() => {
                         setHover(c.key);
-                        if (byMonth.has(c.key)) setExpanded(c.key);
+                        if (byKey.has(c.key)) setExpanded(c.key);
                       }}
                       className="relative flex h-full flex-1 items-end justify-center focus:outline-none"
                     >
                       {active && (
                         <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white shadow dark:bg-gray-100 dark:text-gray-900">
-                          {monthName(c.key)} · <span className="font-semibold">{formatEur(c.total)}</span>
+                          {kind.label(c.key)} ·{" "}
+                          <span className="font-semibold">{formatEur(c.total)}</span>
                         </span>
                       )}
                       <span
@@ -119,7 +252,8 @@ export default function Stats({
                           active && "bg-emerald-700 dark:bg-emerald-300"
                         )}
                         style={{
-                          height: max > 0 && c.total > 0 ? `max(${(c.total / max) * 100}%, 2px)` : 0,
+                          height:
+                            max > 0 && c.total > 0 ? `max(${(c.total / max) * 100}%, 2px)` : 0,
                         }}
                       />
                     </button>
@@ -127,7 +261,7 @@ export default function Stats({
                 })}
               </div>
               <div className="mt-1 flex gap-1">
-                {chart.map((c) => (
+                {chart.map((c, i) => (
                   <span
                     key={c.key}
                     className={clsx(
@@ -135,35 +269,35 @@ export default function Stats({
                       c.key === current && "font-semibold text-gray-800 dark:text-gray-200"
                     )}
                   >
-                    {monthName(c.key, "short").replace(".", "")}
+                    {/* redke oznake: vsaka druga, vedno tudi tekoče obdobje (zadnji stolpec) */}
+                    {kind.sparse && (CHART_BARS - 1 - i) % 2 === 1 ? "" : kind.short(c.key)}
                   </span>
                 ))}
               </div>
             </div>
-          </section>
+          </div>
 
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Po mesecih</h2>
-            {months.map((m) => {
-              const open = expanded === m.month;
+          <div className="space-y-2">
+            {periods.map((p) => {
+              const isOpen = expanded === p.key;
               return (
                 <div
-                  key={m.month}
-                  className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                  key={p.key}
+                  className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800"
                 >
                   <button
                     type="button"
-                    onClick={() => setExpanded(open ? null : m.month)}
-                    aria-expanded={open}
+                    onClick={() => setExpanded(isOpen ? null : p.key)}
+                    aria-expanded={isOpen}
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60"
                   >
-                    {open ? <IconChevronDown /> : <IconChevronRight />}
-                    <span className="flex-1 font-medium capitalize">{monthName(m.month)}</span>
-                    <span className="font-semibold tabular-nums">{formatEur(m.total)}</span>
+                    {isOpen ? <IconChevronDown /> : <IconChevronRight />}
+                    <span className="flex-1 font-medium capitalize">{kind.label(p.key)}</span>
+                    <span className="font-semibold tabular-nums">{formatEur(p.total)}</span>
                   </button>
-                  {open && (
+                  {isOpen && (
                     <ul className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-800 dark:border-gray-800">
-                      {m.stores.map(({ store, total }) => (
+                      {p.stores.map(({ store, total }) => (
                         <li key={store.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                           <StoreLogo name={store.name} />
                           <span className="flex-1 truncate">{store.name}</span>
@@ -177,9 +311,9 @@ export default function Stats({
                 </div>
               );
             })}
-          </section>
-        </>
+          </div>
+        </div>
       )}
-    </div>
+    </section>
   );
 }

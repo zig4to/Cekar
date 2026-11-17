@@ -3,7 +3,7 @@ import type {
   CekarListDetail,
   CekarListSummary,
   CekarArchivedList,
-  CekarSpentMonth,
+  CekarSpentPeriod,
   CekarMember,
   CekarMembership,
   Database,
@@ -302,16 +302,27 @@ export async function getShoppingListNames(supabase: Supa) {
 }
 
 // Ključ meseca ("2026-11") po ljubljanskem času.
-export const monthKey = (d: Date) => MONTH_KEY.format(d).slice(0, 7);
+export const monthKey = (d: Date) => DAY_KEY.format(d).slice(0, 7);
 
-const MONTH_KEY = new Intl.DateTimeFormat("en-CA", {
+// Ključ tedna = ponedeljek tega tedna ("2026-11-16") po ljubljanskem času.
+export function weekKey(d: Date) {
+  const day = new Date(`${DAY_KEY.format(d)}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  return day.toISOString().slice(0, 10);
+}
+
+const DAY_KEY = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Ljubljana",
   year: "numeric",
   month: "2-digit",
+  day: "2-digit",
 });
 
-// Zneski iz vseh seznamov (tudi arhiviranih), združeni po mesecu vnosa.
-export async function getSpentByMonth(supabase: Supa): Promise<CekarSpentMonth[]> {
+// Zneski iz vseh seznamov (tudi arhiviranih), združeni po mesecu in po tednu
+// vnosa (spent_at). Najnovejše obdobje prvo.
+export async function getSpentByPeriod(
+  supabase: Supa
+): Promise<{ months: CekarSpentPeriod[]; weeks: CekarSpentPeriod[] }> {
   const [{ data: rows }, stores] = await Promise.all([
     supabase
       .from("cekar_list_stores")
@@ -321,20 +332,26 @@ export async function getSpentByMonth(supabase: Supa): Promise<CekarSpentMonth[]
   ]);
   const byId = new Map(stores.map((s) => [s.id, s]));
   const months = new Map<string, Map<string, number>>();
+  const weeks = new Map<string, Map<string, number>>();
+  const add = (into: Map<string, Map<string, number>>, key: string, storeId: string, v: number) => {
+    const perStore = into.get(key) ?? new Map<string, number>();
+    perStore.set(storeId, (perStore.get(storeId) ?? 0) + v);
+    into.set(key, perStore);
+  };
   for (const r of rows ?? []) {
-    const store = byId.get(r.store_id);
-    if (!store || r.spent === null || !r.spent_at) continue;
-    const key = monthKey(new Date(r.spent_at));
-    const perStore = months.get(key) ?? new Map<string, number>();
-    perStore.set(r.store_id, (perStore.get(r.store_id) ?? 0) + Number(r.spent));
-    months.set(key, perStore);
+    if (!byId.has(r.store_id) || r.spent === null || !r.spent_at) continue;
+    const at = new Date(r.spent_at);
+    add(months, monthKey(at), r.store_id, Number(r.spent));
+    add(weeks, weekKey(at), r.store_id, Number(r.spent));
   }
-  return [...months]
-    .map(([month, perStore]) => {
-      const list = [...perStore]
-        .map(([id, total]) => ({ store: byId.get(id)!, total }))
-        .sort((a, b) => b.total - a.total);
-      return { month, total: list.reduce((a, s) => a + s.total, 0), stores: list };
-    })
-    .sort((a, b) => b.month.localeCompare(a.month));
+  const toList = (groups: Map<string, Map<string, number>>) =>
+    [...groups]
+      .map(([key, perStore]) => {
+        const list = [...perStore]
+          .map(([id, total]) => ({ store: byId.get(id)!, total }))
+          .sort((a, b) => b.total - a.total);
+        return { key, total: list.reduce((a, s) => a + s.total, 0), stores: list };
+      })
+      .sort((a, b) => b.key.localeCompare(a.key));
+  return { months: toList(months), weeks: toList(weeks) };
 }
