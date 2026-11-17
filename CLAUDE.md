@@ -84,7 +84,7 @@ gospodinjstva). V glavi trgovine `ReceiptButtons`: sponka → celozaslonska izbi
 Kamera (`capture="environment"`) / Galerija / Datoteka (tudi PDF, `0014_receipt_pdf.sql`)
 → `uploadReceipt` (`src/lib/cekar/receipts.ts`, pomanjša na 1800 px JPEG, nalaga
 naravnost iz brskalnika — mimo omejitve velikosti server action) →
-`addReceiptAction`; ikona računa odpre `ReceiptsDialog` (začasne povezave,
+`addReceiptAction`; ikona računa odpre celozaslonski `ReceiptsDialog` (začasne povezave,
 brisanje). Ob brisanju seznama ostanejo datoteke v bucketu (vrstice gredo s cascade).
 
 `0010_store_spent.sql`: `cekar_list_stores.spent numeric(10,2)` — znesek, zapravljen v

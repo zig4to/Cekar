@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import Modal from "@/components/ui/Modal";
-import { IconFile, IconTrash } from "@/components/ui/icons";
+import { createPortal } from "react-dom";
+import { IconFile, IconTrash, IconX } from "@/components/ui/icons";
 import { deleteReceiptAction } from "@/actions/cekar";
 import { receiptUrls } from "@/lib/cekar/receipts";
 import type { CekarReceipt } from "@/lib/types/database.types";
 
-// Ogled slik računov ene trgovine na seznamu. Bucket je zaseben, zato ob
-// odprtju dobimo začasne povezave; klik na sliko jo odpre v polni velikosti.
+// Celozaslonski ogled računov ene trgovine na seznamu. Bucket je zaseben, zato
+// ob odprtju dobimo začasne povezave; klik na sliko jo odpre v polni velikosti.
 export default function ReceiptsDialog({
   open,
   onClose,
@@ -45,58 +45,93 @@ export default function ReceiptsDialog({
     });
   };
 
-  return (
-    <Modal open={open} onClose={onClose} title={`Računi · ${storeName}`}>
-      <div className="space-y-3">
-        {receipts.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Ni shranjenih računov.</p>
-        )}
-        <div className="grid grid-cols-2 gap-2">
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    // pod celozaslonskim pogledom se stran ne premika
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [open, onClose]);
+
+  if (!open || typeof document === "undefined") return null;
+
+  // Celozaslonski pregled: računi čez celo širino eden pod drugim (drsenje),
+  // klik na sliko jo odpre v izvirni velikosti v novem zavihku.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
+      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+        <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">
+          Računi · {storeName}
+          {receipts.length > 1 && (
+            <span className="ml-2 text-sm font-normal text-white/60">{receipts.length}</span>
+          )}
+        </h2>
+        <button
+          type="button"
+          aria-label="Zapri"
+          onClick={onClose}
+          className="rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white"
+        >
+          <IconX className="h-6 w-6" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl space-y-6 p-3">
+          {receipts.length === 0 && (
+            <p className="py-10 text-center text-sm text-white/60">Ni shranjenih računov.</p>
+          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           {receipts.map((r) => {
             const url = urls.get(r.path);
             return (
-              <figure
-                key={r.id}
-                className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
-              >
+              <figure key={r.id} className="space-y-2">
                 {url ? (
-                  <a href={url} target="_blank" rel="noreferrer">
+                  <a href={url} target="_blank" rel="noreferrer" className="block">
                     {r.path.toLowerCase().endsWith(".pdf") ? (
-                      <span className="flex h-40 w-full flex-col items-center justify-center gap-2 bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                        <IconFile className="h-10 w-10" />
-                        <span className="text-xs font-semibold">PDF</span>
+                      <span className="flex h-64 w-full flex-col items-center justify-center gap-3 rounded-lg bg-white/5 text-white/70">
+                        <IconFile className="h-14 w-14" />
+                        <span className="text-sm font-semibold">PDF · odpri</span>
                       </span>
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element -- začasna povezava iz Storage
-                      <img src={url} alt="Račun" className="h-40 w-full bg-gray-50 object-cover dark:bg-gray-800" />
+                      <img
+                        src={url}
+                        alt="Račun"
+                        className="mx-auto max-h-[calc(100dvh-8rem)] w-full rounded-lg object-contain"
+                      />
                     )}
                   </a>
                 ) : (
-                  <div className="h-40 animate-pulse bg-gray-100 dark:bg-gray-800" />
+                  <div className="h-[60dvh] animate-pulse rounded-lg bg-white/5" />
                 )}
-                <figcaption className="flex items-center justify-between gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
+                <figcaption className="flex items-center justify-between gap-2 text-sm text-white/60">
                   {new Date(r.created_at).toLocaleString("sl-SI", {
                     day: "numeric",
                     month: "numeric",
+                    year: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
                   <button
                     type="button"
-                    aria-label="Izbriši račun"
                     disabled={pending}
                     onClick={() => remove(r)}
-                    className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+                    className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-white/60 hover:bg-red-500/20 hover:text-red-300"
                   >
-                    <IconTrash />
+                    <IconTrash /> Izbriši
                   </button>
                 </figcaption>
               </figure>
             );
           })}
         </div>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
-    </Modal>
+    </div>,
+    document.body
   );
 }
