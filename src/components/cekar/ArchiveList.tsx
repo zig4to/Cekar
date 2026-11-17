@@ -154,7 +154,7 @@ function MoveOpenItems({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mb-1 flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-950"
+        className="my-1 flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-100 px-2.5 py-1.5 text-xs font-medium text-emerald-800 hover:border-emerald-400 hover:bg-emerald-200 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900"
       >
         <IconRepeat className="h-3.5 w-3.5" /> {label}
       </button>
