@@ -6,7 +6,7 @@ import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
-import ReceiptReminder, { HomeDivider } from "@/components/cekar/ReceiptReminder";
+import { HomeDivider } from "@/components/cekar/ReceiptReminder";
 import RecentArchived from "@/components/cekar/RecentArchived";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
@@ -155,7 +155,6 @@ export default function ListsHome({
                   <IconPlus className="h-5 w-5" />
                 </button>
               </li>
-              {current && <ReceiptReminder />}
               {current && <HomeDivider />}
               </Fragment>
             );

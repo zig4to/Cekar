@@ -24,6 +24,7 @@ import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconCheck, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
 import SingleItemStore from "@/components/cekar/SingleItemStore";
+import ReceiptReminder from "@/components/cekar/ReceiptReminder";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
@@ -357,6 +358,8 @@ export default function ListView({
         />
         );
       })}
+
+      {!isTemplate && !archived && stores.length > 0 && <ReceiptReminder />}
 
       <button
         type="button"

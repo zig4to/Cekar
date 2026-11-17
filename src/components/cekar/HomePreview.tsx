@@ -2,7 +2,7 @@
 
 import { Fragment } from "react";
 import { usePathname } from "next/navigation";
-import ReceiptReminder, { HomeDivider } from "@/components/cekar/ReceiptReminder";
+import { HomeDivider } from "@/components/cekar/ReceiptReminder";
 import RecentArchived from "@/components/cekar/RecentArchived";
 import { IconBook, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import { itemsLabel } from "@/lib/cekar/text";
@@ -63,7 +63,6 @@ export default function HomePreview() {
               <IconPlus className="h-5 w-5" />
             </span>
           </li>
-          {i === 0 && <ReceiptReminder />}
           {i === 0 && <HomeDivider />}
           </Fragment>
         ))}
