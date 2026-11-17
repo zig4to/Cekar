@@ -165,7 +165,8 @@ export type CekarArchivedList = {
   stores: {
     store: CekarStore;
     spent: number | null;
-    open: number; // neodkljukani izdelki te trgovine (niso bili kupljeni)
+    // neodkljukani izdelki te trgovine (niso bili kupljeni)
+    openItems: { id: string; name: string; quantity: number }[];
     receipts: CekarReceipt[];
   }[];
   itemCount: number;

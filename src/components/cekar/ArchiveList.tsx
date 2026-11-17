@@ -8,7 +8,8 @@ import StoreLogo from "@/components/cekar/StoreLogo";
 import SpentButton from "@/components/cekar/SpentButton";
 import ReceiptButtons from "@/components/cekar/ReceiptButtons";
 import { formatEur, itemsLabel } from "@/lib/cekar/text";
-import type { CekarArchivedList } from "@/lib/types/database.types";
+import clsx from "@/lib/utils/clsx";
+import type { CekarArchivedList, CekarStore } from "@/lib/types/database.types";
 
 const dateLabel = (iso: string) =>
   new Date(iso).toLocaleDateString("sl-SI", {
@@ -36,7 +37,9 @@ export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">Arhiv nakupov</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {lists.length === 0 ? "Še ni opravljenih nakupov" : `${lists.length} opravljenih nakupov`}
+            {lists.length === 0
+              ? "Še ni opravljenih nakupov"
+              : `${lists.length} opravljenih nakupov`}
           </p>
         </div>
       </div>
@@ -59,10 +62,10 @@ export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
 function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
   const [error, setError] = useState<string | null>(null);
   const movable = l.stores.filter(
-    (s) => s.open > 0 && !(s.store.single_item && s.store.unit_price !== null)
+    (s) => s.openItems.length > 0 && !(s.store.single_item && s.store.unit_price !== null)
   );
   const openStores = movable.length;
-  const openTotal = movable.reduce((sum, s) => sum + s.open, 0);
+  const openTotal = movable.reduce((sum, s) => sum + s.openItems.length, 0);
 
   return (
     <li className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -91,6 +94,10 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
             listId={l.id}
             storeId={null}
             label={`Prenesi vse neodkljukane (${openTotal}) na nov seznam`}
+            groups={movable.map((s) => ({
+              store: s.store,
+              items: s.openItems,
+            }))}
             onError={setError}
           />
         </div>
@@ -98,12 +105,17 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
 
       {l.stores.length > 0 && (
         <ul className="divide-y divide-gray-100 border-t border-gray-100 bg-emerald-50/40 dark:divide-gray-800 dark:border-gray-800 dark:bg-emerald-950/10">
-          {l.stores.map(({ store, spent, open, receipts }) => (
+          {l.stores.map(({ store, spent, openItems, receipts }) => (
             <li key={store.id} className="py-1 pl-4 pr-2">
               <div className="flex items-center gap-1">
                 <StoreLogo name={store.name} />
                 <span className="ml-1 min-w-0 flex-1 truncate text-sm">{store.name}</span>
-                <SpentButton listId={l.id} storeId={store.id} storeName={store.name} spent={spent} />
+                <SpentButton
+                  listId={l.id}
+                  storeId={store.id}
+                  storeName={store.name}
+                  spent={spent}
+                />
                 <ReceiptButtons
                   householdId={l.householdId}
                   listId={l.id}
@@ -113,12 +125,13 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
                 />
               </div>
               {/* trgovina s ceno za kos šteje izdelek kot kupljen (znesek ob zaključku) */}
-              {open > 0 && !(store.single_item && store.unit_price !== null) && (
+              {openItems.length > 0 && !(store.single_item && store.unit_price !== null) && (
                 <div className="ml-7">
                   <MoveOpenItems
                     listId={l.id}
                     storeId={store.id}
-                    label={`Prenesi neodkljukane (${open}) na nov seznam`}
+                    label={`Prenesi neodkljukane (${openItems.length}) na nov seznam`}
+                    groups={[{ store, items: openItems }]}
                     onError={setError}
                   />
                 </div>
@@ -139,11 +152,17 @@ function MoveOpenItems({
   listId,
   storeId,
   label,
+  groups,
   onError,
 }: {
   listId: string;
   storeId: string | null;
   label: string;
+  // predogled: kaj gre na nov seznam (po trgovinah)
+  groups: {
+    store: CekarStore;
+    items: { id: string; name: string; quantity: number }[];
+  }[];
   onError: (error: string | null) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -167,32 +186,64 @@ function MoveOpenItems({
   }
 
   return (
-    <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
-      <span className="text-gray-600 dark:text-gray-300">
+    <div className="my-1 rounded-md border border-emerald-200 bg-white p-2.5 text-xs dark:border-emerald-900 dark:bg-gray-900">
+      <div className="space-y-2">
+        {groups.map(({ store, items }) => (
+          <div key={store.id}>
+            {groups.length > 1 && (
+              <p className="mb-1 flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-200">
+                <StoreLogo name={store.name} className="h-4 w-4" /> {store.name}
+              </p>
+            )}
+            <ul className="space-y-0.5">
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className={clsx(
+                    "flex items-baseline gap-1.5 text-sm text-gray-800 dark:text-gray-100",
+                    groups.length > 1 && "pl-5.5"
+                  )}
+                >
+                  <span className="text-gray-400">•</span>
+                  <span className="min-w-0 break-words">{item.name}</span>
+                  {item.quantity > 1 && (
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {item.quantity}×
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2.5 text-gray-600 dark:text-gray-300">
         Izdelki gredo z arhiva na nov seznam.
-      </span>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          startTransition(async () => {
-            onError(null);
-            const res = await moveOpenItemsToNewListAction(listId, storeId);
-            if (res?.error) onError(res.error);
-          })
-        }
-        className="rounded bg-emerald-600 px-2 py-1 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-      >
-        {pending ? "Prenašam …" : "Prenesi"}
-      </button>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => setConfirming(false)}
-        className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-      >
-        Prekliči
-      </button>
+      </p>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              onError(null);
+              const res = await moveOpenItemsToNewListAction(listId, storeId);
+              if (res?.error) onError(res.error);
+            })
+          }
+          className="rounded bg-emerald-600 px-2 py-1 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {pending ? "Prenašam …" : "Prenesi"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setConfirming(false)}
+          className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          Prekliči
+        </button>
+      </div>
     </div>
   );
 }
