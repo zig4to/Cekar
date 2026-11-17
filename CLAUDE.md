@@ -168,7 +168,10 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   potrditev na mestu) → `archiveListAction` nastavi `cekar_lists.archived_at`
   (stolpec iz 0001). `/arhiv` `ArchiveList` (`getArchivedLists`): kartica z
   datumom in vsoto, pod njo trgovine nakupa z `SpentButton` in `ReceiptButtons`
-  (znesek in račun se dodajata tudi po nakupu). Arhiviran seznam ima pas
+  (znesek in račun se dodajata tudi po nakupu). Trgovina z neodkljukanimi
+  izdelki ima pod sabo „Prenesi neodkljukane (N) na nov seznam“
+  (`moveOpenItemsToNewListAction`: nov seznam „Nakup D. M.“ s to trgovino, izdelki
+  gredo z arhiva — premik, ne kopija; trgovine s ceno za kos so izvzete). Arhiviran seznam ima pas
   „Vrni med sezname“, nazaj vodi na `/arhiv` in ne gre v predpomnilnik domače strani.
 - `/izdelki` `ProductsCatalog` — skupni seznam izdelkov: vrstice
   `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri njem =

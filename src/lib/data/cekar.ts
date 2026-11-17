@@ -219,7 +219,7 @@ export async function getArchivedLists(supabase: Supa): Promise<CekarArchivedLis
       .select("list_id, store_id, spent, position")
       .in("list_id", ids)
       .order("position"),
-    supabase.from("cekar_items").select("list_id").in("list_id", ids),
+    supabase.from("cekar_items").select("list_id, store_id, checked").in("list_id", ids),
     supabase.from("cekar_receipts").select("*").in("list_id", ids).order("created_at"),
     getStores(supabase),
   ]);
@@ -233,6 +233,9 @@ export async function getArchivedLists(supabase: Supa): Promise<CekarArchivedLis
         {
           store,
           spent: ls.spent === null ? null : Number(ls.spent),
+          open: (items ?? []).filter(
+            (i) => i.list_id === l.id && i.store_id === ls.store_id && !i.checked
+          ).length,
           receipts: (receipts ?? []).filter(
             (r) => r.list_id === l.id && r.store_id === ls.store_id
           ),

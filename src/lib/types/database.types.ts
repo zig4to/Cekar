@@ -162,7 +162,12 @@ export type CekarArchivedList = {
   name: string;
   householdId: string; // za pot računa v bucketu
   archivedAt: string;
-  stores: { store: CekarStore; spent: number | null; receipts: CekarReceipt[] }[];
+  stores: {
+    store: CekarStore;
+    spent: number | null;
+    open: number; // neodkljukani izdelki te trgovine (niso bili kupljeni)
+    receipts: CekarReceipt[];
+  }[];
   itemCount: number;
   spent: number; // vsota vnesenih zneskov trgovin (EUR)
 };

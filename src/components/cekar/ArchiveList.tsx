@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { IconArrowLeft, IconChevronRight } from "@/components/ui/icons";
+import { IconArrowLeft, IconChevronRight, IconRepeat } from "@/components/ui/icons";
+import { moveOpenItemsToNewListAction } from "@/actions/cekar";
 import StoreLogo from "@/components/cekar/StoreLogo";
 import SpentButton from "@/components/cekar/SpentButton";
 import ReceiptButtons from "@/components/cekar/ReceiptButtons";
@@ -82,23 +83,88 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
 
       {l.stores.length > 0 && (
         <ul className="divide-y divide-gray-100 border-t border-gray-100 bg-emerald-50/40 dark:divide-gray-800 dark:border-gray-800 dark:bg-emerald-950/10">
-          {l.stores.map(({ store, spent, receipts }) => (
-            <li key={store.id} className="flex items-center gap-1 py-1 pl-4 pr-2">
-              <StoreLogo name={store.name} />
-              <span className="ml-1 min-w-0 flex-1 truncate text-sm">{store.name}</span>
-              <SpentButton listId={l.id} storeId={store.id} storeName={store.name} spent={spent} />
-              <ReceiptButtons
-                householdId={l.householdId}
-                listId={l.id}
-                store={store}
-                receipts={receipts}
-                onError={setError}
-              />
+          {l.stores.map(({ store, spent, open, receipts }) => (
+            <li key={store.id} className="py-1 pl-4 pr-2">
+              <div className="flex items-center gap-1">
+                <StoreLogo name={store.name} />
+                <span className="ml-1 min-w-0 flex-1 truncate text-sm">{store.name}</span>
+                <SpentButton listId={l.id} storeId={store.id} storeName={store.name} spent={spent} />
+                <ReceiptButtons
+                  householdId={l.householdId}
+                  listId={l.id}
+                  store={store}
+                  receipts={receipts}
+                  onError={setError}
+                />
+              </div>
+              {/* trgovina s ceno za kos šteje izdelek kot kupljen (znesek ob zaključku) */}
+              {open > 0 && !(store.single_item && store.unit_price !== null) && (
+                <MoveOpenItems listId={l.id} storeId={store.id} count={open} onError={setError} />
+              )}
             </li>
           ))}
         </ul>
       )}
       {error && <p className="px-4 pb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </li>
+  );
+}
+
+// Neodkljukane (nekupljene) izdelke trgovine prenese na nov seznam s
+// trgovino vred; potrditev na mestu, nato preusmeritev na nov seznam.
+function MoveOpenItems({
+  listId,
+  storeId,
+  count,
+  onError,
+}: {
+  listId: string;
+  storeId: string;
+  count: number;
+  onError: (error: string | null) => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="mb-1 ml-7 flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-950"
+      >
+        <IconRepeat className="h-3.5 w-3.5" /> Prenesi neodkljukane ({count}) na nov seznam
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-1 ml-7 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-gray-600 dark:text-gray-300">
+        Izdelki gredo z arhiva na nov seznam.
+      </span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            onError(null);
+            const res = await moveOpenItemsToNewListAction(listId, storeId);
+            if (res?.error) onError(res.error);
+          })
+        }
+        className="rounded bg-emerald-600 px-2 py-1 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+      >
+        {pending ? "Prenašam …" : "Prenesi"}
+      </button>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => setConfirming(false)}
+        className="rounded px-2 py-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+      >
+        Prekliči
+      </button>
+    </div>
   );
 }

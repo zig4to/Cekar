@@ -187,6 +187,62 @@ async function fillUnitPriceSpent(supabase: Supa, listId: string) {
   }
 }
 
+// Arhiv: neodkljukane (nekupljene) izdelke ene trgovine prenese na nov
+// seznam skupaj s trgovino (brez default_items) — z arhiviranega seznama
+// jih odstrani, da jih ni mogoče prenesti dvakrat. Preusmeri na nov seznam.
+export async function moveOpenItemsToNewListAction(
+  listId: string,
+  storeId: string
+): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { data: open } = await c.supabase
+    .from("cekar_items")
+    .select("id, name, quantity")
+    .eq("list_id", listId)
+    .eq("store_id", storeId)
+    .eq("checked", false)
+    .order("position")
+    .order("created_at");
+  if (!open?.length) return { error: "Neodkljukanih izdelkov ni več." };
+
+  const today = new Intl.DateTimeFormat("sl-SI", {
+    day: "numeric",
+    month: "numeric",
+    timeZone: "Europe/Ljubljana",
+  }).format(new Date());
+  const { data: list, error } = await c.supabase
+    .from("cekar_lists")
+    .insert({ household_id: c.householdId, name: `Nakup ${today}`, created_by: c.userId })
+    .select("id")
+    .single();
+  if (error || !list) return fail(undefined, "Seznama ni bilo mogoče ustvariti.");
+  const { error: linkError } = await c.supabase
+    .from("cekar_list_stores")
+    .insert({ list_id: list.id, store_id: storeId, position: 1 });
+  if (linkError) return fail(undefined, "Trgovine ni bilo mogoče dodati.");
+
+  for (const item of open) {
+    // izdelek je v katalogu že z arhiviranega seznama — kategorija ostane
+    const { error: addError } = await c.supabase.rpc("cekar_add_item", {
+      p_list_id: list.id,
+      p_store_id: storeId,
+      p_name: item.name,
+      p_quantity: item.quantity,
+    });
+    if (addError) return fail(undefined, "Izdelka ni bilo mogoče prenesti.");
+  }
+  await c.supabase
+    .from("cekar_items")
+    .delete()
+    .in(
+      "id",
+      open.map((i) => i.id)
+    );
+  revalidatePath("/", "layout");
+  redirect(`/seznam/${list.id}`);
+}
+
 export async function unarchiveListAction(listId: string): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
