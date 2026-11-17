@@ -58,6 +58,11 @@ export default function ArchiveList({ lists }: { lists: CekarArchivedList[] }) {
 
 function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
   const [error, setError] = useState<string | null>(null);
+  const movable = l.stores.filter(
+    (s) => s.open > 0 && !(s.store.single_item && s.store.unit_price !== null)
+  );
+  const openStores = movable.length;
+  const openTotal = movable.reduce((sum, s) => sum + s.open, 0);
 
   return (
     <li className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -80,6 +85,16 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
         </div>
         <IconChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
       </Link>
+      {openStores > 1 && (
+        <div className="-mt-2 px-4 pb-2">
+          <MoveOpenItems
+            listId={l.id}
+            storeId={null}
+            label={`Prenesi vse neodkljukane (${openTotal}) na nov seznam`}
+            onError={setError}
+          />
+        </div>
+      )}
 
       {l.stores.length > 0 && (
         <ul className="divide-y divide-gray-100 border-t border-gray-100 bg-emerald-50/40 dark:divide-gray-800 dark:border-gray-800 dark:bg-emerald-950/10">
@@ -99,7 +114,14 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
               </div>
               {/* trgovina s ceno za kos šteje izdelek kot kupljen (znesek ob zaključku) */}
               {open > 0 && !(store.single_item && store.unit_price !== null) && (
-                <MoveOpenItems listId={l.id} storeId={store.id} count={open} onError={setError} />
+                <div className="ml-7">
+                  <MoveOpenItems
+                    listId={l.id}
+                    storeId={store.id}
+                    label={`Prenesi neodkljukane (${open}) na nov seznam`}
+                    onError={setError}
+                  />
+                </div>
               )}
             </li>
           ))}
@@ -110,17 +132,18 @@ function ArchiveCard({ list: l }: { list: CekarArchivedList }) {
   );
 }
 
-// Neodkljukane (nekupljene) izdelke trgovine prenese na nov seznam s
-// trgovino vred; potrditev na mestu, nato preusmeritev na nov seznam.
+// Neodkljukane (nekupljene) izdelke trgovine (storeId null = vseh trgovin)
+// prenese na nov seznam s trgovinami vred; potrditev na mestu, nato
+// preusmeritev na nov seznam.
 function MoveOpenItems({
   listId,
   storeId,
-  count,
+  label,
   onError,
 }: {
   listId: string;
-  storeId: string;
-  count: number;
+  storeId: string | null;
+  label: string;
   onError: (error: string | null) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -131,15 +154,15 @@ function MoveOpenItems({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="mb-1 ml-7 flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-950"
+        className="mb-1 flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-950"
       >
-        <IconRepeat className="h-3.5 w-3.5" /> Prenesi neodkljukane ({count}) na nov seznam
+        <IconRepeat className="h-3.5 w-3.5" /> {label}
       </button>
     );
   }
 
   return (
-    <div className="mb-1 ml-7 flex flex-wrap items-center gap-2 text-xs">
+    <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
       <span className="text-gray-600 dark:text-gray-300">
         Izdelki gredo z arhiva na nov seznam.
       </span>

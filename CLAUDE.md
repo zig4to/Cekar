@@ -171,7 +171,9 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   (znesek in račun se dodajata tudi po nakupu). Trgovina z neodkljukanimi
   izdelki ima pod sabo „Prenesi neodkljukane (N) na nov seznam“
   (`moveOpenItemsToNewListAction`: nov seznam „Nakup D. M.“ s to trgovino, izdelki
-  gredo z arhiva — premik, ne kopija; trgovine s ceno za kos so izvzete). Arhiviran seznam ima pas
+  gredo z arhiva — premik, ne kopija; trgovine s ceno za kos so izvzete). Če jih
+  ima več trgovin, je pod datumom kartice še „Prenesi vse neodkljukane (N)“
+  (ista akcija s `storeId` null → vse te trgovine na en nov seznam). Arhiviran seznam ima pas
   „Vrni med sezname“, nazaj vodi na `/arhiv` in ne gre v predpomnilnik domače strani.
 - `/izdelki` `ProductsCatalog` — skupni seznam izdelkov: vrstice
   `cekar_products` z istim `lower(name)` so en izdelek, trgovine pri njem =
