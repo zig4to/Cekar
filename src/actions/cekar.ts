@@ -153,8 +153,38 @@ export async function archiveListAction(listId: string): Promise<CekarResult> {
     .eq("id", listId)
     .eq("is_template", false);
   if (error) return fail(undefined, "Premik v arhiv ni uspel.");
+  await fillUnitPriceSpent(c.supabase, listId);
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+// Ob zaključku nakupa: trgovine z eno ceno za kos (Mlekarica, Domača Jajca),
+// ki še nimajo zneska, dobijo količina × cena — tudi če izdelek ni odkljukan.
+// Ročno vpisanega zneska ne povozi.
+async function fillUnitPriceSpent(supabase: Supa, listId: string) {
+  const [{ data: links }, { data: items }] = await Promise.all([
+    supabase
+      .from("cekar_list_stores")
+      .select("store_id, spent, cekar_stores(single_item, unit_price)")
+      .eq("list_id", listId)
+      .is("spent", null),
+    supabase.from("cekar_items").select("store_id, quantity").eq("list_id", listId),
+  ]);
+  for (const link of links ?? []) {
+    const store = link.cekar_stores as unknown as
+      | { single_item: boolean; unit_price: number | string | null }
+      | null;
+    if (!store?.single_item || store.unit_price === null) continue;
+    const qty = (items ?? [])
+      .filter((i) => i.store_id === link.store_id)
+      .reduce((a, b) => a + b.quantity, 0);
+    if (qty === 0) continue;
+    await supabase
+      .from("cekar_list_stores")
+      .update({ spent: Math.round(qty * Number(store.unit_price) * 100) / 100 })
+      .eq("list_id", listId)
+      .eq("store_id", link.store_id);
+  }
 }
 
 export async function unarchiveListAction(listId: string): Promise<CekarResult> {

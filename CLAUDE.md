@@ -103,7 +103,8 @@ sekcije. Izdelek = `default_items[1]`. Nastavlja se zaenkrat samo v bazi.
 v meniju ⋯ vrstice `SingleItemStore` (`setStoreUnitPriceAction`). Ob odkljukanju
 `toggleItemAction` (`syncUnitPriceSpent`) zapiše `cekar_list_stores.spent` =
 količina × cena, ob odznačitvi ga pobriše; sprememba cene preračuna samo
-trenutni seznam.
+trenutni seznam. „Nakup opravljen“ (`fillUnitPriceSpent`) trgovinam s ceno brez
+zneska zapiše količina × cena tudi za neodkljukan izdelek (ročnega zneska ne povozi).
 
 `0007_template_list.sql`: `cekar_lists.is_template` — **stalni seznam** (en na
 gospodinjstvo, partial unique index), na dnu `ListsHome` (pod seznami). Ureja se kot
