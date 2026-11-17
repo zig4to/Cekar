@@ -6,7 +6,8 @@ import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
-import ReceiptReminder from "@/components/cekar/ReceiptReminder";
+import ReceiptReminder, { HomeDivider } from "@/components/cekar/ReceiptReminder";
+import RecentArchived from "@/components/cekar/RecentArchived";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
 import { itemsLabel } from "@/lib/cekar/text";
@@ -34,12 +35,14 @@ export default function ListsHome({
   stores,
   products,
   categories,
+  archived,
 }: {
   lists: CekarListSummary[];
   householdName: string;
   stores: CekarStore[];
   products: CekarProduct[];
   categories: CekarCategory[];
+  archived: { id: string; name: string }[]; // zadnji opravljeni nakupi
 }) {
   const [creating, setCreating] = useState(false);
   const [quickList, setQuickList] = useState<CekarListSummary | null>(null);
@@ -49,8 +52,8 @@ export default function ListsHome({
 
   // Za takojšnji pogled ob odprtju seznama / vrnitvi sem (loading.tsx).
   useEffect(() => {
-    rememberLists(lists, stores, householdName, products, categories);
-  }, [lists, stores, householdName, products, categories]);
+    rememberLists(lists, stores, householdName, products, categories, archived);
+  }, [lists, stores, householdName, products, categories, archived]);
 
   const quickAdd = (storeId: string, name: string, quantity: number) => {
     const list = quickList;
@@ -153,9 +156,11 @@ export default function ListsHome({
                 </button>
               </li>
               {current && <ReceiptReminder />}
+              {current && <HomeDivider />}
               </Fragment>
             );
           })}
+          <RecentArchived lists={archived} />
         </ul>
       )}
 

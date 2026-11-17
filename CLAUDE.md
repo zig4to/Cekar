@@ -155,7 +155,9 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - `/` `ListsHome`: najnovejši seznam (`created_at` padajoče, prvi) je večja
   kartica z oznako „Aktualno“ na zgornjem robu (kartica brez `overflow-hidden`);
   kartice nimajo števca izdelkov. Pod njo `ReceiptReminder` („Prosimo, če
-  slikate račune.“, tudi v `HomePreview`). Na telefonu sta stalni seznam in povezava
+  slikate račune.“, tudi v `HomePreview`), nato vedno črta (`HomeDivider`), ostali
+  aktivni seznami in na koncu `RecentArchived` — nizke kartice samo z imenom treh
+  zadnjih opravljenih nakupov (`getRecentArchived`, odprejo arhiviran seznam). Na telefonu sta stalni seznam in povezava
   „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
   skupina `max-sm:mt-auto`).
 - `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu

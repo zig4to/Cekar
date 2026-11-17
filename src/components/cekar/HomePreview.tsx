@@ -2,11 +2,12 @@
 
 import { Fragment } from "react";
 import { usePathname } from "next/navigation";
-import ReceiptReminder from "@/components/cekar/ReceiptReminder";
+import ReceiptReminder, { HomeDivider } from "@/components/cekar/ReceiptReminder";
+import RecentArchived from "@/components/cekar/RecentArchived";
 import { IconBook, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import { itemsLabel } from "@/lib/cekar/text";
 import { ListSkeleton } from "@/components/cekar/ListPreview";
-import { cachedHouseholdName, cachedLists } from "@/lib/cekar/preview";
+import { cachedArchived, cachedHouseholdName, cachedLists } from "@/lib/cekar/preview";
 
 // Takojšnji pogled domače strani med nalaganjem: zadnji znani seznami v
 // enaki postavitvi kot ListsHome (brez interakcije, dokler ne pride
@@ -63,8 +64,10 @@ export default function HomePreview() {
             </span>
           </li>
           {i === 0 && <ReceiptReminder />}
+          {i === 0 && <HomeDivider />}
           </Fragment>
         ))}
+        <RecentArchived lists={cachedArchived()} static />
       </ul>
       {/* kot v ListsHome: na telefonu na dnu zaslona */}
       <div className="space-y-4 max-sm:mt-auto">

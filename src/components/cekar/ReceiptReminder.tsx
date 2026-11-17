@@ -10,3 +10,12 @@ export default function ReceiptReminder() {
     </li>
   );
 }
+
+// Črta pod kartico Aktualno (in opozorilom) — vedno, tudi brez kartic pod njo.
+export function HomeDivider() {
+  return (
+    <li aria-hidden className="py-1">
+      <hr className="border-gray-300 dark:border-gray-700" />
+    </li>
+  );
+}

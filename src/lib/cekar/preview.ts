@@ -17,15 +17,19 @@ let singleStores = new Set<string>();
 // Za razvrstitev po kategorijah v takojšnjem pogledu.
 let catalog: CekarProduct[] = [];
 let categories: CekarCategory[] = [];
+// Zadnji opravljeni nakupi (kompaktne kartice pod Aktualno na domači strani).
+let archived: { id: string; name: string }[] = [];
 
 export function rememberLists(
   next: CekarListSummary[],
   stores: Pick<CekarStore, "id" | "name" | "single_item">[],
   household: string,
   products: CekarProduct[],
-  cats: CekarCategory[]
+  cats: CekarCategory[],
+  recentArchived: { id: string; name: string }[]
 ) {
   lists = next;
+  archived = recentArchived;
   householdName = household;
   catalog = products;
   categories = cats;
@@ -62,6 +66,10 @@ export function cachedList(id: string) {
 
 export function cachedStoreName(id: string) {
   return storeNames.get(id) ?? "";
+}
+
+export function cachedArchived() {
+  return archived;
 }
 
 export function cachedHouseholdName() {

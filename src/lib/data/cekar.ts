@@ -96,6 +96,17 @@ export async function getStoreProducts(supabase: Supa, storeId: string) {
   return data ?? [];
 }
 
+// Zadnji opravljeni nakupi za domačo stran (kompaktne kartice pod Aktualno).
+export async function getRecentArchived(supabase: Supa, limit = 3) {
+  const { data } = await supabase
+    .from("cekar_lists")
+    .select("id, name")
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
 export async function getListSummaries(supabase: Supa): Promise<CekarListSummary[]> {
   const [{ data: lists }, { data: listStores }, { data: items }, stores] =
     await Promise.all([
