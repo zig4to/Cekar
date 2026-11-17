@@ -1,6 +1,5 @@
 "use client";
 
-import ReceiptReminder from "@/components/cekar/ReceiptReminder";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { IconArrowLeft, IconCheck, IconChevronDown } from "@/components/ui/icons";
@@ -198,8 +197,6 @@ export default function ListPreview() {
           </section>
         );
       })}
-      {/* kot v ListView */}
-      {!summary.isTemplate && summary.storeIds.length > 0 && <ReceiptReminder />}
     </div>
   );
 }

@@ -6,8 +6,8 @@ import { addItemAction, createListAction } from "@/actions/cekar";
 import Button from "@/components/ui/Button";
 import PromptDialog from "@/components/ui/PromptDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
-import { HomeDivider } from "@/components/cekar/ReceiptReminder";
-import RecentArchived from "@/components/cekar/RecentArchived";
+
+import RecentArchived, { HomeDivider } from "@/components/cekar/RecentArchived";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import { rememberLists } from "@/lib/cekar/preview";
 import { itemsLabel } from "@/lib/cekar/text";
@@ -36,6 +36,7 @@ export default function ListsHome({
   products,
   categories,
   archived,
+  newListName,
 }: {
   lists: CekarListSummary[];
   householdName: string;
@@ -43,6 +44,7 @@ export default function ListsHome({
   products: CekarProduct[];
   categories: CekarCategory[];
   archived: { id: string; name: string }[]; // zadnji opravljeni nakupi
+  newListName: string; // predlog imena novega seznama ("Trgovina November #3")
 }) {
   const [creating, setCreating] = useState(false);
   const [quickList, setQuickList] = useState<CekarListSummary | null>(null);
@@ -223,6 +225,7 @@ export default function ListsHome({
           items={template.items}
           stores={template.storeIds.map((id) => ({ id, name: storeById.get(id)?.name ?? "" }))}
           lists={shoppingLists}
+          newListName={newListName}
         />
       )}
       <PromptDialog
@@ -230,7 +233,8 @@ export default function ListsHome({
         onClose={() => setCreating(false)}
         title="Nov nakupovalni seznam"
         label="Ime seznama"
-        placeholder="npr. Sobotni nakup"
+        initialValue={newListName}
+        placeholder="npr. Trgovina November #1"
         submitLabel="Ustvari"
         onSubmit={createListAction}
       />

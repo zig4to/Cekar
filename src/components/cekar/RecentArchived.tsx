@@ -37,3 +37,12 @@ export default function RecentArchived({
     );
   });
 }
+
+// Črta pod kartico Aktualno — vedno, tudi brez kartic pod njo.
+export function HomeDivider() {
+  return (
+    <li aria-hidden className="py-1">
+      <hr className="border-gray-300 dark:border-gray-700" />
+    </li>
+  );
+}

@@ -14,10 +14,6 @@ type TemplateItem = { id: string; store_id: string; name: string; quantity: numb
 
 const NEW_LIST = "";
 
-function defaultListName() {
-  const d = new Date();
-  return `Nakup ${d.getDate()}. ${d.getMonth() + 1}.`;
-}
 
 // Stalni seznam → nakupovalni seznam. Pregled izdelkov po trgovinah (vsi
 // izbrani, odkljukaš, česar ta teden ne rabiš), izbira ciljnega seznama ali
@@ -28,12 +24,14 @@ export default function WriteToListDialog({
   items,
   stores,
   lists,
+  newListName,
 }: {
   open: boolean;
   onClose: () => void;
   items: TemplateItem[];
   stores: { id: string; name: string }[]; // trgovine stalnega seznama, v vrstnem redu
   lists: { id: string; name: string }[]; // nakupovalni seznami (brez stalnega)
+  newListName: string; // predlog: "Trgovina November #3"
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState(NEW_LIST);
@@ -43,11 +41,11 @@ export default function WriteToListDialog({
 
   useEffect(() => {
     if (!open) return;
-    // Ob vsakem odprtju: vse izbrano, nov seznam z današnjim datumom.
+    // Ob vsakem odprtju: vse izbrano, nov seznam s predlaganim imenom.
     /* eslint-disable react-hooks/set-state-in-effect */
     setSelected(new Set(items.map((i) => i.id)));
     setTarget(NEW_LIST);
-    setNewName(defaultListName());
+    setNewName(newListName);
     setError(null);
     /* eslint-enable react-hooks/set-state-in-effect */
     // eslint-disable-next-line react-hooks/exhaustive-deps

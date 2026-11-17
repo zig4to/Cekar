@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getListDetail, getShoppingListNames } from "@/lib/data/cekar";
+import { getListDetail, getNewListName, getShoppingListNames } from "@/lib/data/cekar";
 import { NO_CATEGORIES_COOKIE, collapsedCookie, parseCollapsed } from "@/lib/cekar/collapsed";
 import ListView from "@/components/cekar/ListView";
 
@@ -17,9 +17,10 @@ export default async function ListPage({
   const [supabase, jar] = await Promise.all([createClient(), cookies()]);
   // imena seznamov rabi samo stalni seznam ("Zapiši na seznam"), poizvedba
   // pa je majhna in gre v istem krogu
-  const [detail, shoppingLists] = await Promise.all([
+  const [detail, shoppingLists, newListName] = await Promise.all([
     getListDetail(supabase, id),
     getShoppingListNames(supabase),
+    getNewListName(supabase),
   ]);
   if (!detail) notFound();
   const collapsed = parseCollapsed(jar.get(collapsedCookie(id))?.value);
@@ -30,6 +31,7 @@ export default async function ListPage({
       collapsedStoreIds={collapsed}
       noCategoryStoreIds={noCategories}
       shoppingLists={shoppingLists}
+      newListName={newListName}
     />
   );
 }

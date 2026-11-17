@@ -4,6 +4,7 @@ import {
   getCategories,
   getListSummaries,
   getMembership,
+  getNewListName,
   getProducts,
   getRecentArchived,
   getStores,
@@ -15,14 +16,16 @@ export default async function HomePage() {
   const user = await getAuthUser(supabase);
   if (!user) return null;
 
-  const [membership, lists, stores, products, categories, archived] = await Promise.all([
-    getMembership(supabase, user.id),
-    getListSummaries(supabase),
-    getStores(supabase),
-    getProducts(supabase),
-    getCategories(supabase),
-    getRecentArchived(supabase),
-  ]);
+  const [membership, lists, stores, products, categories, archived, newListName] =
+    await Promise.all([
+      getMembership(supabase, user.id),
+      getListSummaries(supabase),
+      getStores(supabase),
+      getProducts(supabase),
+      getCategories(supabase),
+      getRecentArchived(supabase),
+      getNewListName(supabase),
+    ]);
   if (!membership) return null; // layout pokaže Onboarding
   return (
     <ListsHome
@@ -32,6 +35,7 @@ export default async function HomePage() {
       products={products}
       categories={categories}
       archived={archived}
+      newListName={newListName}
     />
   );
 }

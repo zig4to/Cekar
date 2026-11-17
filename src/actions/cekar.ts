@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { guessCategory } from "@/lib/cekar/categories";
 import { RECEIPT_BUCKET } from "@/lib/cekar/receipt-bucket";
+import { getNewListName } from "@/lib/data/cekar";
 
 export type CekarResult = { error?: string };
 
@@ -227,14 +228,10 @@ export async function moveOpenItemsToNewListAction(
   const open = (items ?? []).filter((i) => storeIds.includes(i.store_id));
   if (!open.length) return { error: "Neodkljukanih izdelkov ni več." };
 
-  const today = new Intl.DateTimeFormat("sl-SI", {
-    day: "numeric",
-    month: "numeric",
-    timeZone: "Europe/Ljubljana",
-  }).format(new Date());
+  const name = await getNewListName(c.supabase);
   const { data: list, error } = await c.supabase
     .from("cekar_lists")
-    .insert({ household_id: c.householdId, name: `Nakup ${today}`, created_by: c.userId })
+    .insert({ household_id: c.householdId, name, created_by: c.userId })
     .select("id")
     .single();
   if (error || !list) return fail(undefined, "Seznama ni bilo mogoče ustvariti.");

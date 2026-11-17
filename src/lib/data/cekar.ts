@@ -96,6 +96,26 @@ export async function getStoreProducts(supabase: Supa, storeId: string) {
   return data ?? [];
 }
 
+// Predlagano ime novega seznama: "Trgovina November #3" — zaporedna številka
+// = nakupovalni seznami (tudi arhivirani), ustvarjeni ta mesec (ljubljanski
+// čas), + 1.
+export async function getNewListName(supabase: Supa) {
+  const now = new Date();
+  const since = new Date(now.getTime() - 32 * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("cekar_lists")
+    .select("created_at")
+    .eq("is_template", false)
+    .gte("created_at", since);
+  const key = monthKey(now);
+  const count = (data ?? []).filter((l) => monthKey(new Date(l.created_at)) === key).length;
+  const month = new Intl.DateTimeFormat("sl-SI", {
+    month: "long",
+    timeZone: "Europe/Ljubljana",
+  }).format(now);
+  return `Trgovina ${month.charAt(0).toUpperCase()}${month.slice(1)} #${count + 1}`;
+}
+
 // Zadnji opravljeni nakupi za domačo stran (kompaktne kartice pod Aktualno).
 export async function getRecentArchived(supabase: Supa, limit = 3) {
   const { data } = await supabase

@@ -2,8 +2,8 @@
 
 import { Fragment } from "react";
 import { usePathname } from "next/navigation";
-import { HomeDivider } from "@/components/cekar/ReceiptReminder";
-import RecentArchived from "@/components/cekar/RecentArchived";
+
+import RecentArchived, { HomeDivider } from "@/components/cekar/RecentArchived";
 import { IconBook, IconChevronRight, IconPlus, IconRepeat } from "@/components/ui/icons";
 import { itemsLabel } from "@/lib/cekar/text";
 import { ListSkeleton } from "@/components/cekar/ListPreview";

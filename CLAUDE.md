@@ -161,8 +161,8 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
   zadnjih opravljenih nakupov (`getRecentArchived`, odprejo arhiviran seznam). Na telefonu sta stalni seznam in povezava
   „Arhiv nakupov“ na dnu zaslona (vsebnik `max-sm:min-h-[calc(100dvh-5.5rem)]`,
   skupina `max-sm:mt-auto`).
-- `ReceiptReminder` („Prosimo, če slikate račune.“) je na seznamu pod trgovinami
-  (nad „Dodaj trgovino“, tudi v `ListPreview`), ne na stalnem ali arhiviranem.
+- Ime novega seznama predlaga `getNewListName` („Trgovina November #3“ = seznami,
+  ustvarjeni ta mesec, + 1): „Nov seznam“, „Zapiši na seznam“ in prenos iz arhiva.
 - `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu
   sekcije, takoj pod glavo trgovine — tudi v `ListPreview`; predlogi: katalog
   te trgovine, brez šumnikov/velikih črk, brez izdelkov, ki so že neodkljukani).

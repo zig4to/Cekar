@@ -24,7 +24,6 @@ import PromptDialog from "@/components/ui/PromptDialog";
 import { IconArrowLeft, IconCheck, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons";
 import StoreSection from "@/components/cekar/StoreSection";
 import SingleItemStore from "@/components/cekar/SingleItemStore";
-import ReceiptReminder from "@/components/cekar/ReceiptReminder";
 import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
@@ -72,11 +71,13 @@ export default function ListView({
   collapsedStoreIds,
   noCategoryStoreIds,
   shoppingLists,
+  newListName,
 }: {
   detail: CekarListDetail;
   collapsedStoreIds: string[];
   noCategoryStoreIds: string[]; // trgovine s skritimi kategorijami (piškotek)
   shoppingLists: { id: string; name: string }[]; // cilji za "Zapiši na seznam"
+  newListName: string; // predlog imena novega seznama ("Trgovina November #3")
 }) {
   const { list, stores, allStores, categories } = detail;
   const router = useRouter();
@@ -359,7 +360,6 @@ export default function ListView({
         );
       })}
 
-      {!isTemplate && !archived && stores.length > 0 && <ReceiptReminder />}
 
       <button
         type="button"
@@ -424,6 +424,7 @@ export default function ListView({
           items={items.filter((i) => !i.id.startsWith("temp-"))}
           stores={stores}
           lists={shoppingLists}
+          newListName={newListName}
         />
       )}
       <AddStoreDialog
