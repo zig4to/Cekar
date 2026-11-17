@@ -151,20 +151,6 @@ export default function StoreSection({
         {!template && (
           <SpentButton listId={listId} storeId={store.id} storeName={store.name} spent={spent} />
         )}
-        <button
-          type="button"
-          aria-pressed={!hideCategories}
-          aria-label={hideCategories ? "Pokaži kategorije" : "Skrij kategorije"}
-          title={hideCategories ? "Pokaži kategorije" : "Skrij kategorije"}
-          onClick={() => {
-            const next = !hideCategories;
-            setHideCategories(next);
-            setNoCategories(store.id, next);
-          }}
-          className="rounded p-1.5 text-gray-500 hover:bg-white/70 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-        >
-          {hideCategories ? <IconEyeOff /> : <IconEye />}
-        </button>
         {!template && receiptProps && (
           <ReceiptButtons store={store} {...receiptProps} />
         )}
@@ -191,6 +177,18 @@ export default function StoreSection({
                   onRemoveStore();
                 }}
               />
+              {/* skupine po kategorijah (piškotek, velja na vseh seznamih) */}
+              <MenuItem
+                onClick={() => {
+                  close();
+                  const next = !hideCategories;
+                  setHideCategories(next);
+                  setNoCategories(store.id, next);
+                }}
+              >
+                {hideCategories ? <IconEye /> : <IconEyeOff />}
+                {hideCategories ? "Pokaži kategorije" : "Skrij kategorije"}
+              </MenuItem>
             </>
           )}
         </Menu>

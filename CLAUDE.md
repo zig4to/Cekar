@@ -163,9 +163,9 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - `/seznam/[id]` `ListView` → `StoreSection` → `AddItemInput` (vedno na vrhu
   sekcije, takoj pod glavo trgovine — tudi v `ListPreview`; predlogi: katalog
   te trgovine, brez šumnikov/velikih črk, brez izdelkov, ki so že neodkljukani).
-  Glava trgovine: logo, ime, € (`SpentButton`), oko (kategorije), kamera/računi,
+  Glava trgovine: logo, ime, € (`SpentButton`), kamera/računi,
   števec, meni ⋯ (Uredi izdelke trgovine, Odstrani s seznama — potrditev v
-  meniju, ne `window.confirm`). Na telefonu je glava višja, logo in ime večja.
+  meniju, ne `window.confirm`; na dnu Skrij/Pokaži kategorije). Na telefonu je glava višja, logo in ime večja.
 - Arhiv: „Nakup opravljen“ pod „Dodaj trgovino“ (`FinishShopping` v `ListView`,
   potrditev na mestu) → `archiveListAction` nastavi `cekar_lists.archived_at`
   (stolpec iz 0001). `/arhiv` `ArchiveList` (`getArchivedLists`): kartica z
@@ -218,7 +218,7 @@ klienta + `householdId`, vsaka konča z `revalidatePath("/", "layout")`).
 - Zložene trgovine: piškotek `cekar-zlozeno-<listId>` (`src/lib/cekar/collapsed.ts`),
   ki ga `seznam/[id]/page.tsx` prebere na strežniku — ob osvežitvi brez
   utripa odpri → zapri. (Ne v localStorage, ta je dosegljiv šele po hidraciji.)
-- Oko v glavi trgovine (`StoreSection`) skrije skupine po kategorijah; piškotek
+- „Skrij kategorije“ v meniju ⋯ trgovine (`StoreSection`) skrije skupine po kategorijah; piškotek
   `cekar-brez-kategorij` (id-ji trgovin, velja na vseh seznamih) bere strežnik.
 
 ### PWA / middleware past
