@@ -117,14 +117,17 @@ export async function getNewListName(supabase: Supa) {
 }
 
 // Zadnji opravljeni nakupi za domačo stran (kompaktne kartice pod Aktualno).
-export async function getRecentArchived(supabase: Supa, limit = 3) {
+export async function getRecentArchived(supabase: Supa, limit = 5) {
   const { data } = await supabase
     .from("cekar_lists")
-    .select("id, name")
+    .select("id, name, created_at")
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
     .limit(limit);
-  return data ?? [];
+  // Prikaz po vrsti ustvarjanja (= po številkah v imenu "#N"), najnovejši zgoraj.
+  return (data ?? [])
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map(({ id, name }) => ({ id, name }));
 }
 
 export async function getListSummaries(supabase: Supa): Promise<CekarListSummary[]> {
