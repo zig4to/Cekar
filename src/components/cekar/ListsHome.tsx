@@ -103,6 +103,9 @@ export default function ListsHome({
 
       {shoppingLists.length === 0 ? (
         <>
+          <p className="!mb-2 px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+            Aktualni nakupi
+          </p>
           <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-center dark:border-gray-700">
             <IconBasket className="h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-600" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
