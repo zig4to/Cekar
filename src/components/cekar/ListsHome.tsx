@@ -102,12 +102,22 @@ export default function ListsHome({
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {shoppingLists.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
-          <IconBasket className="h-10 w-10 text-gray-400 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Še ni seznamov. Ustvari prvega, npr. &bdquo;Sobotni nakup&ldquo;.
-          </p>
-        </div>
+        <>
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
+            <IconBasket className="h-10 w-10 text-gray-400 dark:text-gray-600" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {archived.length
+                ? "Ni odprtega nakupa. Ustvari novega z gumbom Nov seznam."
+                : <>Še ni seznamov. Ustvari prvega, npr. &bdquo;Sobotni nakup&ldquo;.</>}
+            </p>
+          </div>
+          {/* zadnji opravljeni nakupi tudi brez aktualnega seznama */}
+          {archived.length > 0 && (
+            <ul className="space-y-2">
+              <RecentArchived lists={archived} />
+            </ul>
+          )}
+        </>
       ) : (
         <ul className="space-y-2 pt-2">
           {shoppingLists.map((l, i) => {
