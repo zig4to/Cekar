@@ -16,11 +16,13 @@ export default function SpentButton({
   storeId,
   storeName,
   spent,
+  onSaved,
 }: {
   listId: string;
   storeId: string;
   storeName: string;
   spent: number | null;
+  onSaved?: (amount: number | null) => void; // po uspešnem shranjevanju
 }) {
   const [shown, setShown] = useOptimistic(spent);
   const [open, setOpen] = useState(false);
@@ -47,6 +49,8 @@ export default function SpentButton({
       if (res.error) {
         setError(res.error);
         setOpen(true);
+      } else {
+        onSaved?.(amount);
       }
     });
   };

@@ -57,6 +57,7 @@ export default function StoreSection({
   template = false,
   receiptProps,
   spent = null,
+  onSpentSaved,
 }: {
   listId: string;
   store: CekarStore;
@@ -75,6 +76,7 @@ export default function StoreSection({
   template?: boolean; // stalni seznam: brez odkljukanja
   receiptProps?: Omit<ComponentProps<typeof ReceiptButtons>, "store">;
   spent?: number | null; // zapravljeno v tej trgovini
+  onSpentSaved?: (amount: number | null) => void;
 }) {
   const router = useRouter();
   const open = items
@@ -149,7 +151,13 @@ export default function StoreSection({
         </button>
         {/* znesek in račun ob nakupu — stalni seznam ju nima */}
         {!template && (
-          <SpentButton listId={listId} storeId={store.id} storeName={store.name} spent={spent} />
+          <SpentButton
+            listId={listId}
+            storeId={store.id}
+            storeName={store.name}
+            spent={spent}
+            onSaved={onSpentSaved}
+          />
         )}
         {!template && receiptProps && (
           <ReceiptButtons store={store} {...receiptProps} />

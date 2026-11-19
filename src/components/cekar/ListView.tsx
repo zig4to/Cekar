@@ -7,7 +7,7 @@ import {
   addItemAction,
   clearCheckedAction,
   deleteItemAction,
-  archiveListAction,
+  finishListAction,
   deleteListAction,
   unarchiveListAction,
   removeStoreFromListAction,
@@ -28,6 +28,7 @@ import AddStoreDialog from "@/components/cekar/AddStoreDialog";
 import QuickAddDialog from "@/components/cekar/QuickAddDialog";
 import WriteToListDialog from "@/components/cekar/WriteToListDialog";
 import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
 import ItemEditDialog from "@/components/cekar/ItemEditDialog";
 import type { CekarItem, CekarListDetail, CekarProduct } from "@/lib/types/database.types";
 
@@ -93,6 +94,8 @@ export default function ListView({
   const [addingStore, setAddingStore] = useState(false);
   const [quickAdd, setQuickAdd] = useState(false);
   const [writing, setWriting] = useState(false);
+  const [finishStep, setFinishStep] = useState<"ask" | "info" | null>(null);
+  const [finishing, startFinishing] = useTransition();
   const isTemplate = list.is_template;
   const archived = list.archived_at !== null;
   const spentTotal = Object.values(detail.spent).reduce((a, b) => a + b, 0);
@@ -214,6 +217,41 @@ export default function ListView({
       const res = await removeStoreFromListAction(list.id, storeId);
       if (res.error) setError(res.error);
     });
+  };
+
+  // Zaključek nakupa: nekupljeni izdelki gredo na nov seznam (razen trgovin s
+  // ceno za kos — tam izdelek šteje kot kupljen, enako kot finishListAction).
+  const transferable = items.filter(
+    (i) =>
+      !i.checked &&
+      !i.id.startsWith("temp-") &&
+      stores.some((s) => s.id === i.store_id && !(s.single_item && s.unit_price !== null))
+  ).length;
+  const startFinish = () => {
+    if (transferable > 0) setFinishStep("info");
+    else doFinish();
+  };
+  const doFinish = () => {
+    setError(null);
+    startFinishing(async () => {
+      const res = await finishListAction(list.id);
+      if (res?.error) {
+        setError(res.error);
+        setFinishStep(null);
+      }
+    });
+  };
+  // Vpisan zadnji manjkajoči znesek (trgovine z izdelki, ki znesek sploh imajo)
+  // → vprašaj, ali zaključimo nakup.
+  const onSpentSaved = (storeId: string, amount: number | null) => {
+    if (amount === null || archived || isTemplate || detail.spent[storeId] !== undefined) return;
+    const spentNow = { ...detail.spent, [storeId]: amount };
+    const required = stores.filter(
+      (s) => !s.single_item && items.some((i) => i.store_id === s.id)
+    );
+    if (required.length && required.every((s) => spentNow[s.id] !== undefined)) {
+      setFinishStep("ask");
+    }
   };
 
   const total = items.length;
@@ -355,6 +393,7 @@ export default function ListView({
             onError: setError,
           }}
           spent={detail.spent[store.id] ?? null}
+          onSpentSaved={(amount) => onSpentSaved(store.id, amount)}
           template={isTemplate}
         />
         );
@@ -370,7 +409,43 @@ export default function ListView({
       </button>
 
       {/* nakup opravljen → potrditev v istem mestu → seznam v arhiv */}
-      {!isTemplate && !archived && <FinishShopping listId={list.id} />}
+      {!isTemplate && !archived && <FinishShopping onConfirm={startFinish} pending={finishing} />}
+
+      <Modal
+        open={finishStep === "ask"}
+        onClose={() => setFinishStep(null)}
+        title="Zaključim nakup?"
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Vpisani so zneski za vse trgovine. Nakup se premakne v arhiv.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setFinishStep(null)} disabled={finishing}>
+            Ne
+          </Button>
+          <Button autoFocus onClick={startFinish} disabled={finishing}>
+            Da, zaključi
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={finishStep === "info"}
+        onClose={() => !finishing && setFinishStep(null)}
+        title="Nov nakup"
+      >
+        <p className="text-sm text-gray-700 dark:text-gray-200">
+          Ustvarjen bo nov nakup „{newListName}“.
+        </p>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          Nekupljeni izdelki ({transferable}) bodo preneseni.
+        </p>
+        <div className="mt-4 flex justify-end">
+          <Button autoFocus onClick={doFinish} disabled={finishing}>
+            OK
+          </Button>
+        </div>
+      </Modal>
 
       {/* arhiviran seznam: pas na dnu strani (kjer je bil „Nakup opravljen“) */}
       {archived && (
@@ -453,11 +528,10 @@ export default function ListView({
 }
 
 // "Nakup opravljen" pod "Dodaj trgovino": prvi klik odpre majhno potrditev
-// na istem mestu (ne okna čez zaslon), potrditev seznam premakne v arhiv.
-function FinishShopping({ listId }: { listId: string }) {
+// na istem mestu (ne okna čez zaslon), potrditev zaključi nakup (onConfirm:
+// ob nekupljenih izdelkih še okno o novem nakupu).
+function FinishShopping({ onConfirm, pending }: { onConfirm: () => void; pending: boolean }) {
   const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   if (!confirming) {
     return (
@@ -479,21 +553,11 @@ function FinishShopping({ listId }: { listId: string }) {
       <p className="mt-0.5 text-xs text-emerald-800/80 dark:text-emerald-200/70">
         Seznam se premakne v arhiv nakupov. Od tam ga lahko kadar koli vrnete.
       </p>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="mt-3 flex justify-end gap-2">
         <Button variant="secondary" onClick={() => setConfirming(false)} disabled={pending}>
           Prekliči
         </Button>
-        <Button
-          autoFocus
-          disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              const res = await archiveListAction(listId);
-              if (res?.error) setError(res.error);
-            })
-          }
-        >
+        <Button autoFocus disabled={pending} onClick={onConfirm}>
           Da, v arhiv
         </Button>
       </div>

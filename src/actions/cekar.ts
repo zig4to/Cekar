@@ -199,6 +199,36 @@ export async function moveOpenItemsToNewListAction(
 ): Promise<CekarResult> {
   const c = await ctx();
   if (c.error !== undefined) return { error: c.error };
+  const res = await moveOpenItems(c, listId, storeId);
+  if ("error" in res) return { error: res.error };
+  if (!res.newListId) return { error: "Neodkljukanih izdelkov ni več." };
+  revalidatePath("/", "layout");
+  redirect(`/seznam/${res.newListId}`);
+}
+
+// Zaključi nakup: seznam v arhiv, nekupljeni izdelki (kot zgoraj, vse
+// trgovine) gredo na nov seznam. Preusmeri na nov seznam ali domov.
+export async function finishListAction(listId: string): Promise<CekarResult> {
+  const c = await ctx();
+  if (c.error !== undefined) return { error: c.error };
+  const { error } = await c.supabase
+    .from("cekar_lists")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", listId)
+    .eq("is_template", false);
+  if (error) return fail(undefined, "Premik v arhiv ni uspel.");
+  await fillUnitPriceSpent(c.supabase, listId);
+  const res = await moveOpenItems(c, listId, null);
+  revalidatePath("/", "layout");
+  if ("error" in res) return { error: res.error };
+  redirect(res.newListId ? `/seznam/${res.newListId}` : "/");
+}
+
+async function moveOpenItems(
+  c: { supabase: Supa; userId: string; householdId: string },
+  listId: string,
+  storeId: string | null
+): Promise<{ newListId: string | null } | { error: string }> {
   let itemsQuery = c.supabase
     .from("cekar_items")
     .select("id, store_id, name, quantity")
@@ -226,7 +256,7 @@ export async function moveOpenItemsToNewListAction(
     .map((l) => l.store_id)
     .filter((id) => (items ?? []).some((i) => i.store_id === id));
   const open = (items ?? []).filter((i) => storeIds.includes(i.store_id));
-  if (!open.length) return { error: "Neodkljukanih izdelkov ni več." };
+  if (!open.length) return { newListId: null };
 
   const name = await getNewListName(c.supabase);
   const { data: list, error } = await c.supabase
@@ -234,11 +264,11 @@ export async function moveOpenItemsToNewListAction(
     .insert({ household_id: c.householdId, name, created_by: c.userId })
     .select("id")
     .single();
-  if (error || !list) return fail(undefined, "Seznama ni bilo mogoče ustvariti.");
+  if (error || !list) return { error: "Seznama ni bilo mogoče ustvariti." };
   const { error: linkError } = await c.supabase
     .from("cekar_list_stores")
     .insert(storeIds.map((id, i) => ({ list_id: list.id, store_id: id, position: i + 1 })));
-  if (linkError) return fail(undefined, "Trgovine ni bilo mogoče dodati.");
+  if (linkError) return { error: "Trgovine ni bilo mogoče dodati." };
 
   for (const item of open) {
     // izdelek je v katalogu že z arhiviranega seznama — kategorija ostane
@@ -248,7 +278,7 @@ export async function moveOpenItemsToNewListAction(
       p_name: item.name,
       p_quantity: item.quantity,
     });
-    if (addError) return fail(undefined, "Izdelka ni bilo mogoče prenesti.");
+    if (addError) return { error: "Izdelka ni bilo mogoče prenesti." };
   }
   await c.supabase
     .from("cekar_items")
@@ -257,8 +287,7 @@ export async function moveOpenItemsToNewListAction(
       "id",
       open.map((i) => i.id)
     );
-  revalidatePath("/", "layout");
-  redirect(`/seznam/${list.id}`);
+  return { newListId: list.id };
 }
 
 export async function unarchiveListAction(listId: string): Promise<CekarResult> {
