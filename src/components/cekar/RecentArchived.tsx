@@ -13,7 +13,13 @@ export default function RecentArchived({
 }) {
   const row =
     "flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300";
-  return lists.map((l) => {
+  if (!lists.length) return null;
+  const heading = (
+    <li key="naslov" className="px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      Pretekli nakupi
+    </li>
+  );
+  return [heading, ...lists.map((l) => {
     const content = (
       <>
         <IconBook className="h-4 w-4 flex-shrink-0 text-gray-400" />
@@ -35,7 +41,7 @@ export default function RecentArchived({
         )}
       </li>
     );
-  });
+  })];
 }
 
 // Črta pod kartico Aktualno — vedno, tudi brez kartic pod njo.
