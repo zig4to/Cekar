@@ -103,11 +103,11 @@ export default function ListsHome({
 
       {shoppingLists.length === 0 ? (
         <>
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
-            <IconBasket className="h-10 w-10 text-gray-400 dark:text-gray-600" />
+          <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-center dark:border-gray-700">
+            <IconBasket className="h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-600" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {archived.length
-                ? "Ni odprtega nakupa. Ustvari novega z gumbom Nov seznam."
+                ? "Ni še novih seznamov."
                 : <>Še ni seznamov. Ustvari prvega, npr. &bdquo;Sobotni nakup&ldquo;.</>}
             </p>
           </div>
