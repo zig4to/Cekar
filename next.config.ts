@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   // **.ts.net: predogled v DevHost Claude prek Tailscale (https://<pc>.<tailnet>.ts.net:<port>)
   allowedDevOrigins: ["**.trycloudflare.com", "192.168.*.*", "10.*.*.*", "**.ts.net"],
 
+  // Tunel (Klodi živa seja) posreduje x-forwarded-host `localhost:3006`, origin
+  // pa je *.trycloudflare.com — brez tega Next zavrne vsako server akcijo
+  // (npr. Odjava) z "Invalid Server Actions request".
+  experimental: {
+    serverActions: { allowedOrigins: ["**.trycloudflare.com", "localhost:3006"] },
+  },
+
   // Skrij Next.js značko/indikator v spodnjem levem kotu med razvojem.
   // Napake pri prevajanju/izvajanju se še vedno prikažejo.
   devIndicators: false,
